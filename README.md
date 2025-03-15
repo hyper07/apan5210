@@ -66,41 +66,28 @@ If you encounter the "Permission denied (publickey)" error when cloning the repo
 ## Accessing Services
 
 ### MongoDB
-
-- **Web Interface (Mongo Express)**: [http://localhost:8082](http://localhost:8082)
 - **Connection String**:
   ```python
   from pymongo import MongoClient
-  client = MongoClient('mongodb://admin:PassW0rd@apan-mongo:27017/')
+  client = MongoClient('mongodb://admin:PassW0rd@apan5210-mongo:27017/')
   ```
 
-### PostgreSQL
-
-- **Web Interface (PgAdmin)**: [http://localhost:5080](http://localhost:5080)
-- **Connection Details**:
-  ```
-  Hostname: apan-postgres
-  Port: 5432
-  Database: db
-  Username: admin
-  Password: PassW0rd
-  ```
 
 ### Jupyter
 
-- **Web Interface**: [http://localhost:8879](http://localhost:8879)
+- **Web Interface**: [http://localhost:8877](http://localhost:8877)
 
 ### Adminer
 
-- **Web Interface**: [http://localhost:9091](http://localhost:9091)
+- **Web Interface**: [http://localhost:9090](http://localhost:9090)
 
 ### Flask App
 
-- **Web Interface**: [http://localhost:5211](http://localhost:5211)
+- **Web Interface**: [http://localhost:5210](http://localhost:5210)
 
 ### Streamlit App
 
-- **Web Interface**: [http://localhost:19502](http://localhost:19502)
+- **Web Interface**: [http://localhost:19501](http://localhost:19501)
 
 ### Ollama
 
@@ -108,7 +95,7 @@ If you encounter the "Permission denied (publickey)" error when cloning the repo
 
 ### Ollama WebUI
 
-- **Web Interface**: [http://localhost:39081](http://localhost:39081)
+- **Web Interface**: [http://localhost:39090](http://localhost:39090)
 
 ## Additional Information
 

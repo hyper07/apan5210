@@ -92,7 +92,7 @@ services:
   apan5210-ollama:
       image: ollama/ollama:latest
       ports:
-          - 39869:11434
+          - 39870:11434
       volumes:
           - ./ollama/code:/code
           - ./ollama/ollama:/root/.ollama
@@ -112,13 +112,13 @@ services:
       volumes:
           - ./ollama/ollama-webui:/app/backend/data
       ports:
-          - 39080:8080
+          - 39090:8080
       environment: # https://docs.openwebui.com/getting-started/env-configuration#default_models
-          - OLLAMA_BASE_URLS=http://host.docker.internal:39869 #comma separated ollama hosts
+          - OLLAMA_BASE_URLS=http://host.docker.internal:39870 #comma separated ollama hosts
           - ENV=dev
           - WEBUI_AUTH=False
           - WEBUI_NAME=HYPER AI
-          - WEBUI_URL=http://localhost:39080
+          - WEBUI_URL=http://localhost:39090
           - WEBUI_SECRET_KEY=t0p-s3cr3t
           - OPENAI_API_KEY=temp-api-key
       extra_hosts:
