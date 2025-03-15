@@ -1,0 +1,17 @@
+{
+  "postgresql": {
+    "user": "admin",
+    "password": "PassW0rd",
+    "host": "apan5210-postgres",
+    "port": 5432,
+    "database": "db"
+  },
+  "mongodb": {
+    "url": "mongodb://user:pass@apan5210-mongo:27017/db"
+  },
+  "user": "admin",
+  "password": "PassW0rd",
+  "host": "apan5210-postgres",
+  "port": 5432,
+  "database": "db"
+}

@@ -1,0 +1,14 @@
+/ollama-webui/cache
+/ollama-webui/uploads
+/ollama-webui/vector_db
+/ollama/ollama-webui/cache
+/ollama/ollama
+/files/work/.ipynb_checkpoints
+/files/work/.jupyter
+/files/work/.cache
+/files/work/.ipython
+/files/work/.local
+/files/work/templates/.ipynb_checkpoints
+/app-flask/__pycache__
+ollama/ollama-webui/audit.log
+ollama/ollama-webui/webui.db

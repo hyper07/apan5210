@@ -1,0 +1,11 @@
+Flask==3.1.0
+Flask-Bootstrap==3.3.7.1
+numpy==1.26.0
+pandas==2.1.4
+matplotlib==3.8.0
+flask==3.1.0
+psycopg==3.2.5
+psycopg-binary==3.2.5
+pymongo==4.11.2
+requests
+
