@@ -54,15 +54,15 @@ def get_model(model_name):
     """
     if model_name == 'rf':
         if 'model_rf' not in st.session_state:
-            st.session_state['model_rf'] = load_model('random_forest_model.pkl')
+            st.session_state['model_rf'] = load_model('../samples/random_forest_model.pkl')
         return st.session_state['model_rf']
     elif model_name == 'xgb':
         if 'model_xgb' not in st.session_state:
-            st.session_state['model_xgb'] = load_model('xgboost_model.pkl')
+            st.session_state['model_xgb'] = load_model('../samples/xgboost_model.pkl')
         return st.session_state['model_xgb']
     elif model_name == 'lgb':
         if 'model_lgb' not in st.session_state:
-            st.session_state['model_lgb'] = load_model('lightgbm_model.pkl')
+            st.session_state['model_lgb'] = load_model('../samples/lightgbm_model.pkl')
         return st.session_state['model_lgb']
 
 # Fonction pour l'initialisation des résultats
