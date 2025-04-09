@@ -1,78 +1,4 @@
 services:
-  apan5210-postgres:
-    container_name: apan5210-postgres
-    image: postgres
-    ports:
-      - 5435:5432
-    volumes:
-      - apan5210-postgres:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: PassW0rd
-      POSTGRES_DB: db
-      PGDATA: /var/lib/postgresql/data
-    networks:
-      - apan5210-net
-
-  apan5210-adminer:
-    container_name: apan5210-adminer
-    image: adminer
-    depends_on:
-      - apan5210-postgres
-    ports:
-      - 9090:8080
-    networks:
-      - apan5210-net
-
-  apan5210-mongo:
-    container_name: apan5210-mongo
-    image: mongo
-    ports:
-      - 39017:27017
-    volumes:
-      - "apan5210-mongodb:/var/lib/mongo/data"
-      - "$PWD/mongo-entrypoint/:/docker-entrypoint-initdb.d/"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: PassW0rd
-      MONGO_INITDB_DATABASE: db
-    networks:
-      - apan5210-net
-
-  apan5210-jupyter:
-    container_name: apan5210-jupyter
-    build: 
-      context: .
-      dockerfile: ./docker/jupyter/Dockerfile
-    volumes:
-      - ./files/work:/home/jovyan
-      - ~/Documents:/home/jovyan/Documents
-      - ~/Downloads:/home/jovyan/Downloads
-    ports:
-      - 8877:8888
-      - 8878:5001
-    depends_on:
-      - apan5210-mongo
-      - apan5210-postgres
-      - apan5210-flask-app
-    networks:
-      - apan5210-net
-    command: "start-notebook.sh --NotebookApp.token="
-
-  apan5210-app:
-    container_name: apan5210-app
-    build: ./app
-    depends_on:
-      - apan5210-mongo
-      - apan5210-postgres
-    command: ["/wait-for-it.sh", "apan5210-postgres:5432", "--", "npm", "run", "prod"]
-    ports:
-      - "3040:3040"
-    volumes:
-      - ./app:/server
-      - /app/node_modules
-    networks:
-      - apan5210-net
 
   apan5210-streamlit-app:
       image: streamlit-python3.11:latest
@@ -88,6 +14,22 @@ services:
           - ./files:/tmp/files
       ports:
           - 19501:19501
+
+  apan5210-jupyter:
+    container_name: apan5210-jupyter
+    build: 
+      context: .
+      dockerfile: ./docker/jupyter/Dockerfile
+    volumes:
+      - ./files/work:/home/jovyan
+      - ~/Documents:/home/jovyan/Documents
+      - ~/Downloads:/home/jovyan/Downloads
+    ports:
+      - 8877:8888
+      - 8878:5001
+    networks:
+      - apan5210-net
+    command: "start-notebook.sh --NotebookApp.token="
 
   apan5210-ollama:
       image: ollama/ollama:latest
@@ -127,28 +69,6 @@ services:
         - apan5210-ollama
       networks:
         - apan5210-net
-
-  apan5210-flask-app:
-    container_name: apan5210-flask-app
-    build:
-      context: .
-      dockerfile: ./docker/flask/Dockerfile
-    ports:
-      - 5210:5210
-    volumes:
-      - ./app-flask:/app
-    environment:
-      - FLASK_APP=app.py
-    networks:
-      - apan5210-net
-
-volumes:
-  apan5210-postgres:
-    driver: local
-  apan5210-mongodb:
-    driver: local
-  apan5210-pgadmin:
-    driver: local
 
 networks:
   apan5210-net:
