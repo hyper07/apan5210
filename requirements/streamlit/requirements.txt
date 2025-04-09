@@ -1,4 +1,4 @@
-streamlit==1.37.0
+streamlit
 streamlit-aggrid
 streamlit_option_menu
 streamlit-feedback
@@ -59,3 +59,4 @@ opencv-python
 
 pikepdf
 pypdf
+nicegui
