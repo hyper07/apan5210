@@ -121,8 +121,9 @@ class Analyzer:
             If multiple models are requested, rank them by suitability and provide brief reasoning for each.\
             \
             Be clear and concise. Respond in English."
-
-
+        
+        st.session_state.messages.append({"role":"system", "content":presetting})
+        
 
         if prompt := st.chat_input("Your prompt"): 
             st.session_state.messages.append({"role": "user", "content": prompt})
