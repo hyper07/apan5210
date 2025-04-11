@@ -107,7 +107,23 @@ class Analyzer:
             )
 
             st.stop()
-            
+        
+        ########
+        ## presetting by Angelina
+
+        presetting = "You are an expert data scientist.  \
+            When a user uploads a dataset and provides an analysis goal, recommend the most suitable machine learning model based on:\
+            - the data structure and column types,  \
+            - presence of missing values,  \
+            - the nature of the task (e.g., regression, classification, clustering).\
+            \
+            If only one model is needed, recommend the best one and explain why.  \
+            If multiple models are requested, rank them by suitability and provide brief reasoning for each.\
+            \
+            Be clear and concise. Respond in English."
+
+
+
         if prompt := st.chat_input("Your prompt"): 
             st.session_state.messages.append({"role": "user", "content": prompt})
 
