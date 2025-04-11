@@ -62,6 +62,18 @@ class Translater:
                 st.session_state.messages = [
                     # {"role": "assistant", "content": "Please type short prompts (example: relathiship between {column name 1} and {column name 2})"}
                 ]
+        
+        ## by Jerry
+        presetting = "You are an AI language translator. \
+            Your primary task is to translate any input text into the target language. \
+            By default, translate all content into English unless the user specifies a different target language. \
+            \
+            The input may consist of one or multiple paragraphs, possibly drawn from various sources. \
+            Read the entire text carefully, understand the context, and ensure your translation \
+            preserves the original meaning, tone, and style wherever appropriate."
+                            
+        st.session_state.messages.append({"role":"system", "content":presetting})
+
 
         if prompt := st.chat_input("Your prompt"): 
             st.session_state.messages.append({"role": "user", "content": prompt})
