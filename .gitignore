@@ -12,3 +12,13 @@
 /app-flask/__pycache__
 ollama/ollama-webui/audit.log
 ollama/ollama-webui/webui.db
+.DS_Store
+/work/.ipynb_checkpoints
+/work/.local
+/work/.ipython
+/work/.jupyter
+/work/templates/.ipynb_checkpoints
+work/.gitkeep
+/work/.cache
+.DS_Store
+.DS_Store

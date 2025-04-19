@@ -23,10 +23,8 @@ import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
-import ollama
 
-
-file_path = os.getcwd()
+file_path = "/tmp/files"
 llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:37869", verbose=True)
 
 sample_file_path = ''

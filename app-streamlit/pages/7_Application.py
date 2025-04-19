@@ -15,12 +15,11 @@ import pandas as pd
 import os
 import time
 from agents.analyzer import Analyzer
+from agents.insightGenerator import InsightGenerator
 from agents.reportGenerator import ReportGenerator
+from agents.codeGenerator import CodeGenerator
 from agents.reviewer import Reviewer
 from agents.translater import Translater
-# from app_streamlit.agents.analyzer import Analyzer
-from nicegui import __version__
-print(__version__)
 
 folder = '/tmp/files/sample/'
 
@@ -190,7 +189,6 @@ else:
 # from agents.translater import Translater
 
 
-st.write(__version__)
 left, middle, right = st.columns(3)
 if left.button("Analyzer button", use_container_width=True):
     customAgent = Analyzer()

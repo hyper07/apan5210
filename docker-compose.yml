@@ -11,7 +11,8 @@ services:
           - apan5210-net
       volumes:
           - ./app-streamlit:/usr/src/app
-          - ./files:/tmp/files
+          - ./app-streamlit/files:/tmp/files
+          - ./app-streamlit/db:/tmp/db
       ports:
           - 19501:19501
 
@@ -21,7 +22,7 @@ services:
       context: .
       dockerfile: ./docker/jupyter/Dockerfile
     volumes:
-      - ./files/work:/home/jovyan
+      - ./work:/home/jovyan
       - ~/Documents:/home/jovyan/Documents
       - ~/Downloads:/home/jovyan/Downloads
     ports:

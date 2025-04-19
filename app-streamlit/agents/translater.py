@@ -23,8 +23,6 @@ import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
-import ollama
-
 class Translater:
     def __init__(self, var1="deepseek-r1:1.5b", var2="http://host.docker.internal:37869"):
         self.llmModel = var1

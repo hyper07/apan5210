@@ -97,9 +97,21 @@ If you encounter the "Permission denied (publickey)" error when cloning the repo
 
 - **Web Interface**: [http://localhost:39090](http://localhost:39090)
 
+
+### Ollama API
+
+https://github.com/ollama/ollama/blob/main/docs/api.md
+
+
+
 ## Additional Information
 
 - **Docker Network**: All services are connected via a custom Docker network `apan5210-net`.
 - **Volumes**: Persistent data storage is managed using Docker volumes.
+
+
+
+
+
 
 For more detailed information on each service, please refer to the respective documentation.

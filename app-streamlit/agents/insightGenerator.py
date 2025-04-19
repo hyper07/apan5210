@@ -9,7 +9,7 @@ os.environ["DEEPSEEK_API_KEY"] = "sk-91eb1dbe41a34242a86cd3d4f4786fc9"
 API_KEY  = os.getenv("DEEPSEEK_API_KEY")
 BASE_URL = "https://api.deepseek.com"
 
-class ResultCritiqueAgent:
+class InsightGenerator:
     """
     Result Critique Agent:
     Takes a block of analysis text and returns a structured critique,

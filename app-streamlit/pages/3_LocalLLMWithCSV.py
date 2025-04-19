@@ -23,7 +23,6 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
 
-
 file_path = os.getcwd()
 llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:37869", verbose=True)
 
