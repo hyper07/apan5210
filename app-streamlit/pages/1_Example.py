@@ -25,47 +25,49 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import joblib
+import time
 
 #sidebar
 # st.sidebar.title("Example")
 pages=["Project", "Dataset", "Data Visualization", "Preprocessing", "Modeling", "Conclusion"]
 page=st.sidebar.radio("Menu", pages)
-folder = '/tmp/files/sample/'
+sample_folder = '/tmp/files/sample/'
+model_folder = '/tmp/files/models/'
+output_folder = '/tmp/files/result/'
 
-#FONCTIONS DATAS ET RESOURCES --------------------------------------------------------------
-#LANCEMENT DES MODELES SAUVEGARDES
+# FUNCTIONS FOR DATA AND RESOURCES --------------------------------------------------------------
+# LOADING SAVED MODELS
 #@st.cache_resource
 def load_model(filename):
     """
     Load a model from a file with joblib.
     """
-
     try:
-        model = joblib.load(folder+filename)
+        model = joblib.load(model_folder+filename)
         return model
     except FileNotFoundError:
         st.error(f"The template {filename} could not be loaded.")
         return None
 
-# Charger les modèles au besoin
+# Load models as needed
 def get_model(model_name):
     """
     Returns the requested model, loading it if necessary.
     """
     if model_name == 'rf':
         if 'model_rf' not in st.session_state:
-            st.session_state['model_rf'] = load_model('../samples/random_forest_model.pkl')
+            st.session_state['model_rf'] = load_model(model_folder+'random_forest_model.pkl')
         return st.session_state['model_rf']
     elif model_name == 'xgb':
         if 'model_xgb' not in st.session_state:
-            st.session_state['model_xgb'] = load_model('../samples/xgboost_model.pkl')
+            st.session_state['model_xgb'] = load_model(model_folder+'xgboost_model.pkl')
         return st.session_state['model_xgb']
     elif model_name == 'lgb':
         if 'model_lgb' not in st.session_state:
-            st.session_state['model_lgb'] = load_model('../samples/lightgbm_model.pkl')
+            st.session_state['model_lgb'] = load_model(model_folder+'lightgbm_model.pkl')
         return st.session_state['model_lgb']
 
-# Fonction pour l'initialisation des résultats
+# Function to initialize results
 def initialize_results():
     if 'results_rf' not in st.session_state:
         st.session_state['results_rf'] = None
@@ -74,22 +76,21 @@ def initialize_results():
     if 'results_lgb' not in st.session_state:
         st.session_state['results_lgb'] = None
 
-# Initialiser les résultats dans l'état de session
+# Initialize results in session state
 initialize_results()
 
 def save_model(model, filename):
     """
     Save a model to a file with joblib.
     """
-    joblib.dump(model, folder+filename)
+    joblib.dump(model, model_folder+filename)
 
-
-#FONCTION LOAD DATA POUR LE DF
+# FUNCTION TO LOAD DATA FOR THE DATAFRAME
 @st.cache_data
 def load_data():
-    return pd.read_csv(folder+'bank.csv')
+    return pd.read_csv(sample_folder+'bank.csv')
 
-# FONCTIONS PAGE2 JEU DE DONNEES
+# FUNCTIONS FOR PAGE 2 DATASET
 @st.cache_data
 def get_data_summary(df):
     return {
@@ -129,11 +130,11 @@ def check_pdays_previous_equivalence(df):
     equivalence = (filtered_df['previous'] == 0).all()
     return equivalence
 
-#FONCTIONS PAGE 3 PRE PROCESSING
-##PRE PROCESSING PAR ETAPES
+# FUNCTIONS FOR PAGE 3 PREPROCESSING
+## STEP-BY-STEP PREPROCESSING
 @st.cache_data
 def discretize_age(df):
-    df['age_cat'] = pd.cut(df.age, bins=[18, 29, 40, 50, 60, np.inf],labels=['18-29', '30-40', '40-50', '50-60', '60+'], right=False)
+    df['age_cat'] = pd.cut(df.age, bins=[18, 29, 40, 50, 60, np.inf], labels=['18-29', '30-40', '40-50', '50-60', '60+'], right=False)
     df = df.drop('age', axis=1)
     return df
 
@@ -150,69 +151,69 @@ def transform_pdays(df):
     df = df.drop('pdays', axis=1)
     return df
 
-##PRE PROCESSING SPLIT DES JEUX 
+## SPLIT FEATURES AND TARGET
 @st.cache_data
 def separate_features_target(df, target_column):
-    """Séparer les caractéristiques et la cible."""
+    """Separate features and target."""
     features = df.drop(target_column, axis=1)
     target = df[target_column]
     return features, target
 
 @st.cache_data
 def split_train_test(features, target, test_size=0.25, random_state=42):
-    """Séparer les données en ensembles d'entraînement et de test."""
+    """Split data into training and test sets."""
     X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=test_size, random_state=random_state)
     return X_train, X_test, y_train, y_test
 
-##PRE PROCESSING PIPELINE 
-### Fonction pour prétraiter les données
+## PREPROCESSING PIPELINE
+### Function to preprocess data
 @st.cache_data
 def preprocess_data(df):
-    # Conversion de 'month' en int en utilisant un mapping
+    # Convert 'month' to int using a mapping
     month_mapping = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12 }
     df['month'] = df['month'].map(month_mapping)
 
-    # Discrétisation de la variable 'age'
+    # Discretize the 'age' variable
     df['age_cat'] = pd.cut(df.age, bins=[18, 29, 40, 50, 60, np.inf], labels=['18-29', '30-40', '40-50', '50-60', '60+'], right=False)
 
-    # Diviser la colonne 'pdays' en deux colonnes
+    # Split the 'pdays' column into two columns
     df['pdays_contact'] = df['pdays'].apply(lambda x: 'no' if x == -1 else 'yes')
     df['pdays_days'] = df['pdays'].apply(lambda x: 0 if x == -1 else x)
 
-    # Séparation de features et target
+    # Separate features and target
     features = df.drop(columns=['deposit', 'age', 'pdays'])
     target = df['deposit']
 
-    # Séparation en ensembles d'entraînement et de test
+    # Split into training and test sets
     X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.25, random_state=42)
     return X_train, X_test, y_train, y_test
 
-### Fonction pour prétraiter et transformer les données
+### Function to preprocess and transform data
 @st.cache_data
 def preprocess_and_transform(X_train, X_test, y_train, y_test):
-    # Définition des features
+    # Define features
     binary_features = ['default', 'housing', 'loan', 'pdays_contact']
     categorical_features = ['job', 'marital', 'contact', 'poutcome']
     ordinal_features = ['education', 'age_cat']
     numerical_features = ['balance', 'campaign', 'duration', 'previous', 'pdays_days']
     cyclic_features = ['day', 'month']
     
-    # Pipeline pour les variables binaires
+    # Pipeline for binary variables
     binary_pipeline = Pipeline([
         ('binary_encoding', FunctionTransformer(lambda x: x.replace({'yes': 1, 'no': 0}))),
     ])
 
-    # Pipeline pour les variables catégorielles
+    # Pipeline for categorical variables
     categorical_pipeline = Pipeline([
         ('onehot_encoding', OneHotEncoder(handle_unknown='ignore'))
     ])
 
-    # Pré-traitement de 'education'
+    # Preprocessing for 'education'
     most_frequent_education = X_train['education'].mode()[0]
     X_train['education'] = X_train['education'].replace('unknown', most_frequent_education)
     X_test['education'] = X_test['education'].replace('unknown', most_frequent_education)
 
-    # Pipeline pour l'encodage ordinal de 'education' et 'age_cat'
+    # Pipeline for ordinal encoding of 'education' and 'age_cat'
     education_categories = ['primary', 'secondary', 'tertiary']
     age_cat_categories = ['18-29', '30-40', '40-50', '50-60', '60+']
 
@@ -220,13 +221,13 @@ def preprocess_and_transform(X_train, X_test, y_train, y_test):
         ('ordinal_encoding', OrdinalEncoder(categories=[education_categories, age_cat_categories]))
     ])
 
-    # Pipeline pour les variables numériques
+    # Pipeline for numerical variables
     numerical_pipeline = Pipeline([
         ('duration_minutes', FunctionTransformer(lambda x: x / 60.0 if 'duration' in x else x)),
         ('scaler', RobustScaler())
     ])
 
-    # Encodage cyclique pour 'day' et 'month'
+    # Cyclic encoding for 'day' and 'month'
     def encode_cyclic(df, column, max_value):
         df[column + '_sin'] = np.sin(2 * np.pi * df[column] / max_value)
         df[column + '_cos'] = np.cos(2 * np.pi * df[column] / max_value)
@@ -238,7 +239,7 @@ def preprocess_and_transform(X_train, X_test, y_train, y_test):
     X_test = encode_cyclic(X_test, 'day', 31)
     X_test = encode_cyclic(X_test, 'month', 12)
 
-    # Pré-processing complet avec ColumnTransformer
+    # Full preprocessing with ColumnTransformer
     preprocessor = ColumnTransformer([
         ('binary', binary_pipeline, binary_features),
         ('categorical', categorical_pipeline, categorical_features),
@@ -247,16 +248,16 @@ def preprocess_and_transform(X_train, X_test, y_train, y_test):
         ('numerical', numerical_pipeline, numerical_features),
     ])
 
-    # Application du preprocessor sur X_train et X_test
+    # Apply preprocessor to X_train and X_test
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
 
-    # Encodage de la variable cible 'deposit'
+    # Encode the target variable 'deposit'
     label_encoder = LabelEncoder()
     y_train_processed = label_encoder.fit_transform(y_train)
     y_test_processed = label_encoder.transform(y_test)
 
-    # Conversion en DataFrame pour visualisation
+    # Convert to DataFrame for visualization
     columns = (binary_features + 
            list(preprocessor.named_transformers_['categorical'].named_steps['onehot_encoding'].get_feature_names_out(categorical_features)) +
            ordinal_features + 
@@ -270,7 +271,7 @@ def preprocess_and_transform(X_train, X_test, y_train, y_test):
 
     return X_train_processed_df, X_test_processed_df, y_train_processed_df, y_test_processed_df
 
-#FONCTIONS MODELISATION
+# FUNCTIONS FOR MODELING
 @st.cache_data
 def remove_duration(X_train_processed_df, X_test_processed_df):
     """
@@ -284,7 +285,7 @@ def remove_duration(X_train_processed_df, X_test_processed_df):
     X_train_processed_df (pd.DataFrame): Training set without the 'duration' column.
     X_test_processed_df (pd.DataFrame): Test set without the 'duration' column.
     """
-    # Suppression de la colonne 'duration' des ensembles de données
+    # Remove the 'duration' column from the datasets
     if 'duration' in X_train_processed_df.columns:
         X_train_processed_df = X_train_processed_df.drop(columns=['duration'])
     if 'duration' in X_test_processed_df.columns:
@@ -292,24 +293,24 @@ def remove_duration(X_train_processed_df, X_test_processed_df):
     return X_train_processed_df, X_test_processed_df
 
     
-# Entraîner et évaluer le modèle
+# Train and evaluate the model
 def train_and_evaluate_model(model, X_train_processed, X_test_processed, y_train_processed, y_test_processed):
     model.fit(X_train_processed, y_train_processed)
     y_pred = model.predict(X_test_processed)
     
-    # Calcul des métriques
+    # Calculate metrics
     accuracy = accuracy_score(y_test_processed, y_pred)
-    precision = precision_score(y_test_processed, y_pred, pos_label=1)  # 1 correspond à 'yes'
+    precision = precision_score(y_test_processed, y_pred, pos_label=1)  # 1 corresponds to 'yes'
     recall = recall_score(y_test_processed, y_pred, pos_label=1)
     f1 = f1_score(y_test_processed, y_pred, pos_label=1)
     
     # Classification report
     report = classification_report(y_test_processed, y_pred, output_dict=True)
     
-    # Matrice de confusion
+    # Confusion matrix
     cm = confusion_matrix(y_test_processed, y_pred)
     
-    # Importances des caractéristiques
+    # Feature importances
     importances = model.feature_importances_ if hasattr(model, 'feature_importances_') else None
 
     return {
@@ -329,34 +330,35 @@ def save_model(model, filename):
     """
     joblib.dump(model, filename)
 
-#NEW ENTRAINER AVEC BEST PARAMS et SAUVEGARDER
+#NEW TRAIN WITH BEST PARAMS and SAVE
 def train_and_evaluate_and_save(model_class, params, model_name, key):
-    # Créer une instance du modèle avec les paramètres spécifiés
+    # Create an instance of the model with the specified parameters
     model = model_class(**params)
     
-    # Afficher les paramètres du modèle
+    # Display model parameters
     with st.expander(f"Show parameters for model {model_name}"):
         st.write(f"Model {model_name} created with the following parameters:")
         st.write(params)
     
-    # Charger et pré-traiter les données
+    # Load and preprocess data
     df = load_data()
+    df = df.head(100)
     X_train, X_test, y_train, y_test = preprocess_data(df)
     X_train_processed_df, X_test_processed_df, y_train_processed_df, y_test_processed_df = preprocess_and_transform(X_train, X_test, y_train, y_test)
     
-    # Enlever la colonne 'duration' des ensembles de données traitées
+    # Remove the 'duration' column from the processed datasets
     X_train_processed_df, X_test_processed_df = remove_duration(X_train_processed_df, X_test_processed_df)
 
-    # Entraîner et évaluer le modèle
+    # Train and evaluate the model
     results = train_and_evaluate_model(model, X_train_processed_df, X_test_processed_df, y_train_processed_df['Deposit'], y_test_processed_df['Deposit'])
     
-    # Sauvegarder le modèle
-    save_model(model, f'{model_name.lower()}_model.pkl')
+    # Save the model
+    save_model(model, f'{model_name.lower()}_model_1.pkl')
     
-    # Stocker les résultats dans st.session_state
+    # Store results in st.session_state
     st.session_state[key] = results
     
-    # Afficher les résultats
+    # Display results
     st.write("**Classification report**")
     display_classification_report(results['report'])
     
@@ -368,7 +370,7 @@ def train_and_evaluate_and_save(model_class, params, model_name, key):
 
 
 
-# Visualisation de la matrice de confusion
+# Visualization of the confusion matrix
 def plot_confusion_matrix(cm):
     """
     Displays the confusion matrix as a heatmap and the raw matrix.
@@ -376,7 +378,7 @@ def plot_confusion_matrix(cm):
     Parameters:
     cm (np.ndarray): Confusion matrix.
     """
-    # Définir les labels pour les axes
+    # Define labels for axes
     x_labels = ['Actual No', 'Actual Yes'] # Columns: Actual classes
     y_labels = ['Prediction No', 'Prediction Yes'] # Rows: Predicted classes
     
@@ -416,23 +418,23 @@ def plot_confusion_matrix(cm):
     #fig.update_xaxes(autorange='reversed') # Reverse the order of the x labels
     fig.update_yaxes(autorange='reversed') # Reverse the order of the y labels
     
-    # Afficher la figure
+    # Display the figure
     st.plotly_chart(fig)
     
-    # Afficher la matrice de confusion brute pour vérification
-    #st.write("Matrice de confusion brute :")
+    # Display the raw confusion matrix for verification
+    #st.write("Raw confusion matrix:")
     #cm_df = cm, index=['No', 'Yes'], columns=['No', 'Yes'])
     #st.write(cm_df)
 
 
 
-# Affichage du rapport de classification
+# Display the classification report
 @st.cache_data
 def display_classification_report(report):
     report_df = pd.DataFrame(report).transpose()
     st.write(report_df)
 
-# Visualisation des importances des caractéristiques
+# Visualization of feature importances
 def plot_feature_importances(importances, feature_names):
     """
     Displays feature importances as a bar chart with a different color for each bar.
@@ -451,43 +453,43 @@ def plot_feature_importances(importances, feature_names):
         'Importance': importances
     })
     
-    # Trier les importances en ordre décroissant
+    # Sort importances in descending order
     importance_df = importance_df.sort_values(by='Importance', ascending=False)
     
-    # Création du graphique en barres avec Plotly Express
+    # Create the bar chart with Plotly Express
     fig = px.bar(
         importance_df,
         x='Importance',
         y='Feature',
-        orientation='h',  # Barres horizontales
+        orientation='h',  # Horizontal bars
         color='Feature',
         color_discrete_sequence=px.colors.qualitative.Pastel,
         title='Importance of Features',
         labels={'Importance': 'Importance', 'Feature': 'Features'}
     )
     
-    # Personnaliser l'affichage des étiquettes de l'axe des ordonnées
+    # Customize the display of the y-axis labels
     fig.update_layout(
         yaxis_title='Features',
         xaxis_title='Importance',
-        yaxis=dict(tickmode='linear'),  # Ajuste l'angle des étiquettes si nécessaire
-        height=800,  # Ajuste la hauteur du graphique pour améliorer la visibilité des barres
-        bargap=0.1  # Réduit l'écart entre les barres pour les rendre plus larges
+        yaxis=dict(tickmode='linear'),  # Adjust the angle of the labels if necessary
+        height=800,  # Adjust the height of the chart to improve bar visibility
+        bargap=0.1  # Reduce the gap between bars to make them wider
     )
     
-    # Afficher la figure
+    # Display the figure
     st.plotly_chart(fig)
 
 
 
 
 
-#FONCTIONS CONTENUS DES PAGES --------------------------------------------------------------
-#PAGE 0 INTRO PROJET
+# FUNCTIONS FOR PAGE CONTENT --------------------------------------------------------------
+#PAGE 0 INTRO PROJECT
 def show_projet_page():
     st.title("Predicting the success of a bank's marketing campaign")
     st.header("Context")
-    #Création de deux colonnes
+    #Creation of two columns
 
     st.markdown("""
 The data in the `bank.csv` dataset are related to a direct marketing campaign of a Portuguese banking institution conducted between May 2008 and November 2010. \n
@@ -525,7 +527,7 @@ By identifying the key success factors of previous campaigns, we can help the fi
 [Moro et al., 2014] S. Moro, P. Cortez and P. Rita. A Data-Driven Approach to Predict the Success of Bank Telemarketing. Decision Support Systems, Elsevier, 62:22-31, June 2014
         """)
 
-        # Ajouter un bouton
+        # Add a button
     st.markdown(
         """
         <a href="https://www.kaggle.com/datasets/janiobachmann/bank-marketing-dataset/data" target="_blank" style="
@@ -544,18 +546,18 @@ By identifying the key success factors of previous campaigns, we can help the fi
     )
     st.write("")
 
-# PAGE1 JEU DE DONNEES
+# PAGE1 DATASET
 def show_jeu_de_donnees_page():
     st.title("The dataset")
     st.markdown('The bank.csv dataset is based on the UCI Bank Marketing dataset, which can be read here: http://archive.ics.uci.edu/ml/datasets/Bank+Marketing. Creators: S. Moro, P. Rita, P. Cortez.')
     st.header('The variables')
-    df2=pd.read_excel(folder+"variables.xlsx")
+    df2=pd.read_excel(sample_folder+"variables.xlsx")
     st.dataframe(df2)
     st.divider()
     st.header('Data Overview')
-    # Charger les données
+    # Load data
     df = load_data()
-    # Obtenir le résumé des données
+    # Get data summary
     data_summary = get_data_summary(df)
     #TABS CONTAINERS:
     tab1, tab2, tab3, tab4, tab5,tab6= st.tabs(["Overview", "Dimensions", "Statistics", "Types", "Nulls", "Duplicates"])
@@ -598,7 +600,7 @@ def show_jeu_de_donnees_page():
     # TABS CONTAINERS :
     tab1, tab2, tab3, tab4= st.tabs(["Balance", "Duration","Previous","pdays-previous"])
        
-    #TAB1 MOYENNE BALANCE
+    #TAB1 AVERAGE BALANCE
     with tab1:
         st.markdown("**Average Account Balance for depositor and non-depositor customers and for total customers.**")
         code = '''
@@ -613,10 +615,10 @@ def show_jeu_de_donnees_page():
         st.write("The average balance for customers who made a deposit is:", round(mean_balance_yes, 2))
         st.write("The average balance for customers who did not make a deposit is:", round(mean_balance_no, 2))
 
-    #TAB2 MOYENNE DURATION
+    #TAB2 AVERAGE DURATION
     with tab2:
         st.markdown("**Median contact duration in minutes for depositor and non-depositor customers and for total customers.**")
-        # Afficher le code
+        # Display code
         code = '''
         # Convert the duration column from seconds to minutes
         df['duration_minutes'] = round((df['duration'] / 60.0), 2)
@@ -628,9 +630,9 @@ def show_jeu_de_donnees_page():
         median_duration_deposit_no = df[df['deposit'] == 'no']['duration_minutes'].median()
         '''
         st.code(code, language='python')
-        # Exécuter le code
+        # Execute code
         median_duration_all, median_duration_deposit_yes, median_duration_deposit_no = calculate_duration_statistics(df)
-        # Afficher les résultats
+        # Display results
         st.write("The median customer contact duration of the campaign is:", round(median_duration_all, 2), "minutes.")
         st.write("For customers who made a deposit:", round(median_duration_deposit_yes, 2), "minutes.")
         st.write("For customers who did not make a deposit:", round(median_duration_deposit_no, 2), "minutes.")
@@ -638,7 +640,7 @@ def show_jeu_de_donnees_page():
     #TAB3 PREVIOUS
     with tab3:
         st.markdown("**Average number of customer contacts before this campaign for depositor or non-depositor customers and for total customers.**")
-        # Afficher le code
+        # Display code
         code = ''' 
         # Calculate the means of previous for each group of deposit
         mean_previous_all = np.mean(df['previous'])
@@ -646,9 +648,9 @@ def show_jeu_de_donnees_page():
         mean_previous_no = np.mean(df[df['deposit'] == 'no']['previous'])
         '''
         st.code(code, language='python')
-        # Exécuter le code
+        # Execute code
         mean_previous_all, mean_previous_yes, mean_previous_no = calculate_previous_statistics(df)
-        # Afficher les résultats
+        # Display results
         st.write("The average number of customer contacts before this campaign is:", round(mean_previous_all, 2), "contacts.")
         st.write("For customers who made a deposit:", round(mean_previous_yes, 2), " contacts on average.")
         st.write("For customers who did not make a deposit:", round(mean_previous_no, 2), " contacts on average.")
@@ -660,7 +662,7 @@ def show_jeu_de_donnees_page():
         - pdays : Number of days since the last contact of a previous campaign (value -1 equals no contact)
         - previous : Number of contacts before this campaign (value 0 equals no contact)
         """)
-        # Afficher le code
+        # Display code
         code = '''
         # Filter lines where pdays is -1
         filtered_df = df[df['pdays'] == -1]
@@ -669,14 +671,14 @@ def show_jeu_de_donnees_page():
         '''
 
         st.code(code, language='python')
-        # Exécuter le code
+        # Execute code
         equivalence = check_pdays_previous_equivalence(df)
         st.write(f"Do all lines with pdays is equal to -1 and previous value is eqault to 0 => {equivalence}")
 
 # PAGE2 DATAVIZ
 def show_data_viz_page():
     st.title("Data Visualization")
-    # Charger les données
+    # Load data
     df = load_data()
     col1, col2, col3, col4 = st.columns([1, 1, 1,1])
     button1 = col1.button("Deposit target variable")
@@ -684,12 +686,12 @@ def show_data_viz_page():
     button3 = col3.button("Categorical variables")
     button4 = col4.button("Variables versus Target")    
     
-    # Vérifiez si un bouton est cliqué
+    # Check if a button is clicked
     button_clicked = button1 or button2 or button3 or button4
     
-    #Définir button1 par défaut à l'ouverture de la page
+    #Set button1 as default when opening the page
     if not button_clicked or button1:
-        # Code pour afficher le graphique avec Plotly
+        # Code to display the chart with Plotly
         count_deposit = df['deposit'].value_counts()
         color_sequence = ['#FACA5E', '#5242EA']
         # pie chart
@@ -708,21 +710,21 @@ def show_data_viz_page():
             marker=dict(color=color_sequence),
             showlegend=False
         )
-        # figure avec deux sous-plots
+        # figure with two subplots
         fig = make_subplots(
             rows=1, cols=2,
             specs=[[{"type": "domain"}, {"type": "xy"}]],
             subplot_titles=("Distribution", "Number of deposits")
         )
-        # Ajouter pie chart et bar chart à la figure
+        # Add pie chart and bar chart to the figure
         fig.add_trace(pie_chart, row=1, col=1)
         fig.add_trace(bar_chart, row=1, col=2)
-        # Mise à jour
+        # Update
         fig.update_layout(
             title_text="<b>Analysis of the target variable: term deposit or not</b>",
             legend_title="<b>Deposit</b>"
         )
-        # Affichage avec Streamlit
+        # Display with Streamlit
         st.plotly_chart(fig)
         st.subheader("Observation")
         st.markdown("""
@@ -733,14 +735,14 @@ def show_data_viz_page():
         """)
 
     if button2:
-        # Code pour afficher les histogrammes des variables numériques
+        # Code to display histograms of numerical variables
         num_columns = ['balance', 'day', 'duration', 'campaign', 'pdays', 'previous']
-        # Création des sous-graphiques
+        # Create subplots
         fig = make_subplots(rows=2, cols=3, subplot_titles=num_columns)
-        # Position du subplot
+        # Subplot position
         row = 1
         col = 1
-        # Création des histogrammes pour chaque variable numérique
+        # Create histograms for each numerical variable
         for num_column in num_columns:
             fig.add_trace(
                 go.Histogram(
@@ -761,13 +763,13 @@ def show_data_viz_page():
             if col > 3:
                 row += 1
                 col = 1
-        # Mise à jour de la mise en page du graphique
+        # Update chart layout
         fig.update_layout(
             height=800,
             width=1000,
             title_text="<b>Histograms of numerical variables</b>"
         )
-        # Affichage du graphique avec Streamlit
+        # Display the chart with Streamlit
         st.plotly_chart(fig)
         st.subheader("Observation")
         st.markdown("""
@@ -779,21 +781,21 @@ def show_data_viz_page():
         - **Number of previous contacts (previous)**: Very high concentration around 0 which means no previous contacts and presence of extreme values.
         """)
         st.divider()
-        # Convertir la variable cible 'deposit' en numérique
+        # Convert the target variable 'deposit' to numeric
         df['deposit_num'] = df['deposit'].apply(lambda x: 1 if x == 'yes' else 0)
-        # Sélection des variables numériques
+        # Select numerical variables
         var_num_cible = ['age', 'balance', 'duration', 'campaign', 'pdays', 'previous', 'deposit_num']
-        # Calcul de la matrice de corrélation
+        # Calculate the correlation matrix
         corr_matrix_cible = df[var_num_cible].corr()
-        # Création du heatmap avec Plotly
+        # Create the heatmap with Plotly
         heatmap_fig = px.imshow(corr_matrix_cible, text_auto=True, aspect="auto", color_continuous_scale='Turbo')
-        # Mise à jour du layout
+        # Update layout
         heatmap_fig.update_layout(
             title="<b>Heatmap of Numerical Variables with the target variable deposit</b>",
             xaxis_title="Variables",
             yaxis_title="Variables"
         )
-        # Affichage du heatmap avec Streamlit
+        # Display the heatmap with Streamlit
         st.plotly_chart(heatmap_fig)
         st.subheader("Observation")
         st.markdown("""
@@ -804,25 +806,25 @@ def show_data_viz_page():
         """)
 
     if button3:
-        # Catégories à afficher
+        # Categories to display
         cat_columns = ['job', 'marital', 'education', 'default', 'housing', 'loan', 'contact', 'month', 'poutcome']
-        # Palette de couleurs
+        # Color palette
         color_pal4 = ['#56CEB2', '#28DCE0', '#57CF8A', '#579DCF']
-        # Création des sous-graphiques
+        # Create subplots
         fig = make_subplots(rows=3, cols=3, subplot_titles=cat_columns)
-        # Fonction d'application des couleurs
+        # Function to apply colors
         counter = 0
         for cat_column in cat_columns:
             value_counts = df[cat_column].value_counts()
             x_pos = np.arange(0, len(value_counts))
-            # Mélanger les couleurs de la palette de manière aléatoire
+            # Shuffle the colors of the palette randomly
             random_colors = color_pal4.copy()
             random.shuffle(random_colors)
-            # Appliquer les couleurs mélangées aux barres de la catégorie
+            # Apply shuffled colors to category bars
             colors = [random_colors[i % len(random_colors)] for i in range(len(value_counts))]
             trace_x = counter // 3 + 1
             trace_y = counter % 3 + 1
-            # Ajout de la barre
+            # Add the bar
             fig.add_trace(
                 go.Bar(
                     x=x_pos,
@@ -838,23 +840,23 @@ def show_data_viz_page():
                 row=trace_x,
                 col=trace_y
             )
-            # Mise en forme de l'axe x
+            # Format the x-axis
             fig.update_xaxes(
                 tickvals=x_pos,
                 ticktext=value_counts.index,
                 row=trace_x,
                 col=trace_y
             )
-            # Rotation des étiquettes de l'axe x
+            # Rotate x-axis labels
             fig.update_xaxes(tickangle=45, row=trace_x, col=trace_y)
             counter += 1
-        # Mise à jour de la mise en page du graphique
+        # Update chart layout
         fig.update_layout(
             height=800,
             width=1000,
             title_text="<b>Distribution of modalities of categorical variables</b>",
         )
-        # Affichage du graphique avec Streamlit
+        # Display the chart with Streamlit
         st.plotly_chart(fig)
         st.markdown("**Observation**")
         st.markdown("""
@@ -870,7 +872,7 @@ def show_data_viz_page():
         """)
 
     if button4:
-        # Sous-menu pour naviguer dans différentes sections de la page
+        # Submenu to navigate different sections of the page
         st.divider()
         st.markdown("""
         ### Analysis in 4 axes:
@@ -880,18 +882,18 @@ def show_data_viz_page():
         - [Analysis of the previous campaign and its influence on the current campaign](#analysis-of-the-previous-campaign-and-its-influence-on-the-current-campaign)
         """)
 
-        # Section 1: Le profil client
+        # Section 1: The customer profile
         st.markdown("""
         <a id="the-customer-profile"></a>
         ### The customer profile
         """, unsafe_allow_html=True)
 
-        # Graphiques pour le profil client
+        # Charts for customer profile
 
-        # Définir les couleurs spécifiques pour chaque catégorie
+        # Define specific colors for each category
         color_sequence = ['#5242EA', '#FACA5E']
 
-        # 1er graphique : Distribution de l'âge versus dépôt
+        # 1st chart: Age distribution versus deposit
         fig1 = px.box(df, x='age', y='deposit', points='all',
                     color='deposit',
                     title="Age distribution versus deposit",
@@ -900,7 +902,7 @@ def show_data_viz_page():
                     category_orders={"deposit": ["yes", "no"]} #"yes" is before "no"
                  )
 
-        # 2ème graphique : Répartition des dépôts en fonction de l'âge
+        # 2nd chart: Distribution of deposits by age
         count_deposit = df.groupby(['age', 'deposit']).size().reset_index(name='count')
         fig2 = px.bar(count_deposit, x='age', y='count', color='deposit',
                     barmode='group',
@@ -910,22 +912,22 @@ def show_data_viz_page():
                     color_discrete_sequence=color_sequence
                 )
 
-        # Assemblage des graphiques
+        # Assemble charts
         fig = make_subplots(rows=1, cols=2, subplot_titles=[
         "Age distribution versus deposit",
         "Distribution of deposits according to age"
         ])
 
-        # Ajouter fig1 sans légende pour éviter les doublons
+        # Add fig1 without legend to avoid duplicates
         for trace in fig1['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=1)
 
-        # Ajouter fig2 avec légende
+        # Add fig2 with legend
         for trace in fig2['data']:
             fig.add_trace(trace, row=1, col=2)
 
-        # Mise à jour de la mise en page
+        # Update layout
         fig.update_layout(
         height=500,
         width=1500,
@@ -942,10 +944,10 @@ def show_data_viz_page():
         fig.update_xaxes(title_text='Customer Age', row=1, col=2)
         fig.update_yaxes(title_text='Number of repositories', row=1, col=2)
 
-        # Affichage du graphique
+        # Display chart
         st.plotly_chart(fig)
 
-        # Texte explicatif
+        # Explanatory text
         st.markdown("**Observation**")
         st.markdown("""
         - We can see that customers who have subscribed to term deposits are on average older than those who have not subscribed (78 years old compared to 70 years old).
@@ -958,11 +960,11 @@ def show_data_viz_page():
 
         """)
         st.divider()
-        # 2ème graphique : Discrétisation de l'âge
+        # 2nd chart: Age discretization
         df['age_cat'] = pd.cut(df.age, bins=[18,29,40,50,60,96], labels=['18-29','30-40','40-50','50-60','60+'])
         df['age_cat'].value_counts()
 
-        # 1ER GRAPHIQUE AGE
+        # 1ST CHART AGE
         counts_age = df.groupby(['age_cat', 'deposit']).size().unstack()
         total_counts_age = counts_age.sum(axis=1)
         percent_yes_age = (counts_age['yes'] / total_counts_age * 100).round(2)
@@ -980,12 +982,12 @@ def show_data_viz_page():
             hover_data={'count': True, 'percent': ':.2f%'} # show details on hover
         )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_age.update_layout(yaxis_title="Number of repositories",
         legend_title_text='Repository status',
                       xaxis_tickangle=30)
 
-        # 2EME GRAPHIQUE JOB
+        # 2ND CHART JOB
         counts_job = df.groupby(['job', 'deposit']).size().unstack()
         job_order = df.groupby('job')['deposit'].count().reset_index(name='total_deposits')
         job_order = job_order.sort_values(by='total_deposits', ascending=False)['job']
@@ -1001,17 +1003,17 @@ def show_data_viz_page():
             title="Distribution of deposits according to the type of employment",
             labels={'job': 'Job', 'count': 'Number of deposits', 'deposit': 'Deposit'},
             category_orders={'job': job_order},
-            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-            hover_data={'count': True}  # afficher les détails au survol
+            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+            hover_data={'count': True}  # show details on hover
         )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_job.update_layout(yaxis_title="Number of repositories",
         legend_title_text='Repository status',
                       xaxis_tickangle=30,
                       bargap=0.1)
 
-        # 3EME GRAPHIQUE MARITAL
+        # 3RD CHART MARITAL
         marital_order = ['married', 'single', 'divorced']
         counts_marital = df.groupby(['marital', 'deposit']).size().unstack()
         total_counts_marital = counts_marital.sum(axis=1)
@@ -1025,17 +1027,17 @@ def show_data_viz_page():
             title="Distribution of deposits by marital status",
             labels={'marital': 'Marital status', 'count': 'Number of deposits', 'deposit': 'Deposit'},
             category_orders={'marital': marital_order},
-            text=df_plot_marital['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-            hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+            text=df_plot_marital['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+            hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
         )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_marital.update_layout(yaxis_title="Number of deposits",
             legend_title_text='Deposit status',
             xaxis_tickangle=30)
 
-        # 4EME GRAPHIQUE EDUCATION
+        # 4TH CHART EDUCATION
         education_order = df.groupby('education')['deposit'].count().reset_index(name='total_deposits')
         education_order = education_order.sort_values(by='total_deposits', ascending=False)['education']
         education_order = education_order.tolist()
@@ -1051,17 +1053,17 @@ def show_data_viz_page():
             title="Distribution of deposits according to the level of education",
             labels={'education': "Level of education", 'count': 'Number of deposits', 'deposit': 'Deposit'},
             category_orders={'education': education_order},
-            text=df_plot_education['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-            hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+            text=df_plot_education['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+            hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
         )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_education.update_layout(yaxis_title="Number of repositories",
             legend_title_text='Repository status',
             xaxis_tickangle=30)
 
-        # Création des subplots
+        # Create subplots
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=(
@@ -1072,30 +1074,30 @@ def show_data_viz_page():
             )
         )
 
-        # Ajouter fig_age
+        # Add fig_age
         for trace in fig_age['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=1)
 
-        # Ajouter fig_job
+        # Add fig_job
         for trace in fig_job['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=2)
 
-        # Ajouter fig_marital
+        # Add fig_marital
         for trace in fig_marital['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=2, col=1)
 
-        # Ajouter fig_education
+        # Add fig_education
         for trace in fig_education['data']:
             fig.add_trace(trace, row=2, col=2)
 
-        # Mettre à jour les axes avec les orders spécifiés
+        # Update axes with specified orders
         fig.update_xaxes(categoryorder='array', categoryarray=job_order, row=1, col=2)
         fig.update_xaxes(categoryorder='array', categoryarray=marital_order, row=2, col=1)
 
-        # Mise à jour de la mise en page
+        # Update layout
         fig.update_layout(
         height=900,
         width=1200,
@@ -1110,7 +1112,7 @@ def show_data_viz_page():
         fig.update_xaxes(title_text="Level of studies", row=2, col=2)
         fig.update_yaxes(title_text='Number of deposits', row=2, col=2)
 
-        # Afficher les graphiques
+        # Display charts
         st.plotly_chart(fig)
         st.markdown("**Observation**")
         st.markdown("""
@@ -1120,106 +1122,106 @@ def show_data_viz_page():
         - **Educational level**: Although the majority of customers have a secondary education level, a higher proportion of deposit subscribers is observed among those with a higher education level (tertiary), reaching 54%. In contrast, lower levels of education are associated with lower subscription rates.
         """)
         st.divider()
-        # Section 2: Le profil bancaire
+        # Section 2: The banking profile
         st.markdown("""
         <a id="le-profil-bancaire"></a>
         ### The banking profile
         """, unsafe_allow_html=True)
 
-        ## 1ER GRAPHIQUE DEFAULT
-        # Calculer les décomptes pour chaque catégorie de default et deposit
+        ## 1ST CHART DEFAULT
+        # Calculate counts for each default and deposit category
         counts_default = df.groupby(['default', 'deposit']).size().unstack()
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts_default = counts_default.sum(axis=1)
         percent_yes_default = (counts_default['yes'] / total_counts_default * 100).round(2)
         percent_no_default = (counts_default['no'] / total_counts_default * 100).round(2)
-        # Transformer les données pour Plotly Express
+        # Transform data for Plotly Express
         df_plot_default = pd.melt(counts_default.reset_index(), id_vars=['default'], value_vars=['yes', 'no'],var_name='deposit', value_name='count')
 
-        # Ajouter les pourcentages calculés
+        # Add calculated percentages
         df_plot_default['percent'] = percent_yes_default.tolist() + percent_no_default.tolist()
 
-        # Créer le graphique avec Plotly Express
+        # Create chart with Plotly Express
         fig_default = px.bar(df_plot_default, x='default', y='count', color='deposit', barmode='stack',
             title="Distribution of deposits according to payment default",
             labels={'default': 'Payment default', 'count': 'Number of deposits', 'deposit': 'Deposit'},
-             text=df_plot_default['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-             color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-             hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+             text=df_plot_default['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+             color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+             hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
              )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_default.update_layout(yaxis_title="Nombre de dépôts",
                   legend_title_text='Statut du dépôt')
 
 
-        # 2EME GRAPHIQUE LOAN
-        # Calculer les décomptes pour chaque catégorie de loan et deposit
+        # 2ND CHART LOAN
+        # Calculate counts for each loan and deposit category
         counts_loan = df.groupby(['loan', 'deposit']).size().unstack()
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts_loan = counts_loan.sum(axis=1)
         percent_yes_loan = (counts_loan['yes'] / total_counts_loan * 100).round(2)
         percent_no_loan = (counts_loan['no'] / total_counts_loan * 100).round(2)
-        # Transformer les données pour Plotly Express
+        # Transform data for Plotly Express
         df_plot_loan = pd.melt(counts_loan.reset_index(), id_vars=['loan'], value_vars=['yes', 'no'],
                   var_name='deposit', value_name='count')
 
-        # Ajouter les pourcentages calculés
+        # Add calculated percentages
         df_plot_loan['percent'] = percent_yes_loan.tolist() + percent_no_loan.tolist()
 
-        # Créer le graphique avec Plotly Express
+        # Create chart with Plotly Express
         fig_loan = px.bar(df_plot_loan, x='loan', y='count', color='deposit', barmode='stack',
             title="Distribution of deposits according to personal loan",
             labels={'loan': 'Personal loan', 'count': 'Number of deposits', 'deposit': 'Deposit'},
-            text=df_plot_loan['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-            hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+            text=df_plot_loan['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+            hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
             )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_loan.update_layout(yaxis_title="Number of deposits",
         legend_title_text='Deposit status')
 
 
-        # 3EME GRAPHIQUE HOUSING
-        # Calculer les décomptes pour chaque catégorie de housing et deposit
+        # 3RD CHART HOUSING
+        # Calculate counts for each housing and deposit category
         counts_housing = df.groupby(['housing', 'deposit']).size().unstack()
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts_housing = counts_housing.sum(axis=1)
         percent_yes_housing = (counts_housing['yes'] / total_counts_housing * 100).round(2)
         percent_no_housing = (counts_housing['no'] / total_counts_housing * 100).round(2)
-        # Transformer les données pour Plotly Express
+        # Transform data for Plotly Express
         df_plot_housing = pd.melt(counts_housing.reset_index(), id_vars=['housing'], value_vars=['yes', 'no'],
                   var_name='deposit', value_name='count')
 
-        # Ajouter les pourcentages calculés
+        # Add calculated percentages
         df_plot_housing['percent'] = percent_yes_housing.tolist() + percent_no_housing.tolist()
 
-        # Créer le graphique avec Plotly Express
+        # Create chart with Plotly Express
         fig_housing = px.bar(df_plot_housing, x='housing', y='count', color='deposit', barmode='stack',
             title="Distribution of deposits according to the Mortgage",
             labels={'housing': 'Mortgage', 'count': 'Number of deposits', 'deposit': 'Deposit'},
-            text=df_plot_housing['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-            hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+            text=df_plot_housing['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+            color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+            hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
             )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_housing.update_layout(yaxis_title="Number of repositories",
             legend_title_text='Repository status')
 
 
-        # 4EME GRAPHIQUE BALANCE
-        # Distribution de balance versus dépôt
+        # 4TH CHART BALANCE
+        # Distribution of balance versus deposit
         fig_balance = px.box(df, x='deposit', y='balance',
             color='deposit',
             title="Distribution of average account balance",
             color_discrete_sequence=['#5242EA', '#FACA5E'], # set the correct colors,
             labels={'deposit': 'Deposit Status'},
-            category_orders={"deposit": ["yes", "no"]}  #"yes" est avant "no"
+            category_orders={"deposit": ["yes", "no"]}  #"yes" is before "no"
             )
 
-        ## CREATION SUBPLOTS
+        ## CREATE SUBPLOTS
         fig = make_subplots(
             rows=1, cols=4,
             subplot_titles=(
@@ -1230,23 +1232,23 @@ def show_data_viz_page():
             )
         )
 
-        # Ajouter fig_default
+        # Add fig_default
         for trace in fig_default['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=1)
-        # Ajouter fig_loan
+        # Add fig_loan
         for trace in fig_loan['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=2)
-        # Ajouter fig_housing
+        # Add fig_housing
         for trace in fig_housing['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=3)
-        # Ajouter fig_balance
+        # Add fig_balance
         for trace in fig_balance['data']:
             fig.add_trace(trace, row=1, col=4)
 
-        # Mise à jour de la mise en page
+        # Update layout
         fig.update_layout(
             height=500,
             width=1400,
@@ -1264,7 +1266,7 @@ def show_data_viz_page():
         fig.update_xaxes(title_text='deposit (yes, no)', row=1, col=4)
         fig.update_yaxes(title_text='balance', row=1, col=4)
 
-        ## AFFICHER LA FIGURE
+        ## DISPLAY FIGURE
         st.plotly_chart(fig)
         st.markdown("**Observation**")
         st.markdown("""
@@ -1278,25 +1280,25 @@ def show_data_viz_page():
 
 
 
-        # Section 3: Analyse des contacts clients durant la campagne télémarketing
+        # Section 3: Analysis of customer contacts during the telemarketing campaign
         st.markdown("""
         <a id="analysis-of-customer-contacts-during-the-telemarketing-campaign"></a>
         ### Analysis of customer contacts during the telemarketing campaign
         """, unsafe_allow_html=True)
-        # 1. Graphique Contact
-        # Calculer les décomptes pour chaque catégorie de contact et deposit
+        # 1. Chart Contact
+        # Calculate counts for each contact and deposit category
         counts_contact = df.groupby(['contact', 'deposit']).size().unstack(fill_value=0)
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts_contact = counts_contact.sum(axis=1)
         percent_yes_contact = (counts_contact['yes'] / total_counts_contact * 100).round(2)
         percent_no_contact = (counts_contact['no'] / total_counts_contact * 100).round(2)
-        # Transformer les données pour Plotly Express
+        # Transform data for Plotly Express
         df_plot_contact = pd.melt(counts_contact.reset_index(), id_vars=['contact'], value_vars=['yes', 'no'],
                   var_name='deposit', value_name='count')
-        # Ajouter les pourcentages calculés
+        # Add calculated percentages
         df_plot_contact['percent'] = percent_yes_contact.tolist() + percent_no_contact.tolist()
 
-        # Créer le graphique
+        # Create chart
         fig_contact = px.bar(df_plot_contact, x='contact', y='count', color='deposit', barmode='group',
             title="Customer Contact Mode and Deposit Results",
             labels={'contact': 'Customer Contact Mode', 'count': 'Number of Deposits', 'deposit': 'Deposit'},
@@ -1304,12 +1306,12 @@ def show_data_viz_page():
              hover_data={'count': True, 'percent': ':.2f%'}
              )
 
-        # Mettre à jour le layout
+        # Update layout
         fig_contact.update_layout(yaxis_title="Number of repositories",
             legend_title_text='Repository status')
 
 
-        # 2. Graphique Duration
+        # 2. Chart Duration
         fig_duration = px.box(df,
            x='duration',  # Change 'duration_minutes' to 'duration'
            y='deposit',
@@ -1317,43 +1319,43 @@ def show_data_viz_page():
            color_discrete_sequence=['#5242EA', '#FACA5E'],
             title='<b>Influence of contact duration on campaign results')
 
-        # 3. Graphique Month
-        # Calculer le nombre total de dépôts pour chaque mois
+        # 3. Chart Month
+        # Calculate the total number of deposits for each month
         month_order = df.groupby('month')['deposit'].count().reset_index(name='total_deposits')
         month_order = month_order.sort_values(by='total_deposits', ascending=False)['month']
 
-        # Convertir en liste pour utilisation dans category_orders
+        # Convert to list for use in category_orders
         month_order = month_order.tolist()
 
-        # Création de l'histogramme
+        # Create histogram
         fig_month = px.histogram(df, x='month', color='deposit', barmode='group',
                     title="Deposit distribution by month",
                     labels={'month': 'Contact month', 'count': 'Number of deposits', 'deposit': 'Deposit'},
                     category_orders={"month": month_order},
                     color_discrete_sequence=['#5242EA', '#FACA5E'])
 
-        # Mettre à jour le layout
+        # Update layout
         fig_month.update_layout(yaxis_title="Number of repositories",
             legend_title_text='Repository status',
                   xaxis_tickangle=30,
                   bargap=0.1)
 
-        # 4. Graphique M Contact
-        # Grouper par mois et agréger les décomptes
+        # 4. Chart M Contact
+        # Group by month and aggregate counts
         data_month = df.groupby('month').agg(
             campaign_count=('campaign', 'sum'),
             deposit_yes_count=('deposit', lambda x: (x == 'yes').sum()),
             deposit_no_count=('deposit', lambda x: (x == 'no').sum())
         ).reset_index()
-        # Ajouter une nouvelle colonne avec des valeurs manuelles
+        # Add a new column with manual values
         manual_values = [4, 8, 12, 2, 1, 7, 6, 3, 5, 11, 10, 9]
-        # Assigner les valeurs manuelles à la colonne 'manual_order'
+        # Assign manual values to the 'manual_order' column
         data_month['manual_order'] = manual_values
-        # Tri du DataFrame par la colonne 'manual_order'
+        # Sort the DataFrame by the 'manual_order' column
         data_month_sorted = data_month.sort_values(by='manual_order').reset_index(drop=True)
-        # Création du graphique
+        # Create chart
         fig_m_contact = px.line()
-        # Ajout des courbes sur le graphique
+        # Add curves to the chart
         fig_m_contact.add_scatter(x=data_month_sorted['month'], y=data_month_sorted['campaign_count'], mode='lines', name='Nombre de contact', line=dict(color='#034F84', dash='dash'))
         fig_m_contact.add_scatter(x=data_month_sorted['month'], y=data_month_sorted['deposit_yes_count'], mode='lines', name='Dépôts Yes', line=dict(color='#5242EA'))
         fig_m_contact.add_scatter(x=data_month_sorted['month'], y=data_month_sorted['deposit_no_count'], mode='lines', name='Dépôts No', line=dict(color='#FACA5E'))
@@ -1362,7 +1364,7 @@ def show_data_viz_page():
         fig_m_contact.update_xaxes(title_text='Month')
         fig_m_contact.update_yaxes(title_text='Number of contacts')
 
-        # Création des subplots
+        # Create subplots
         fig = make_subplots(
             rows=2, cols=2,
             subplot_titles=(
@@ -1373,25 +1375,25 @@ def show_data_viz_page():
             )
         )
 
-        # Ajouter fig_contact
+        # Add fig_contact
         for trace in fig_contact['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=1)
 
-        # Ajouter fig_duration
+        # Add fig_duration
         for trace in fig_duration['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=2)
 
-        # Ajouter fig_month
+        # Add fig_month
         for trace in fig_month['data']:
             fig.add_trace(trace, row=2, col=1)
 
-        # Ajouter fig_m_contact
+        # Add fig_m_contact
         for trace in fig_m_contact['data']:
             fig.add_trace(trace, row=2, col=2)
 
-        # Mise à jour de la mise en page
+        # Update layout
         fig.update_layout(
             height=600,
             width=1400,
@@ -1411,7 +1413,7 @@ def show_data_viz_page():
         fig.update_xaxes(title_text='Month of contact', row=2, col=2)
         fig.update_yaxes(title_text='Number of deposits', row=2, col=2)
 
-        # Afficher la figure dans Streamlit
+        # Display the figure in Streamlit
         st.plotly_chart(fig)
         st.markdown("**Observation**")
         st.markdown("""
@@ -1423,24 +1425,24 @@ def show_data_viz_page():
         The obvious example is the month of May which seems to be the month with the highest activity of the campaign and for which the deposit share is lower.
         """)
         st.divider()
-        # Section 4: Analyse de la campagne précédente et son influence sur la campagne actuelle
+        # Section 4: Analysis of the previous campaign and its influence on the current campaign
         st.markdown("""
         <a id="analysis-of-the-previous-campaign-and-its-influence-on-the-current-campaign"></a>
         ### Analysis of the previous campaign and its influence on the current campaign
         """, unsafe_allow_html=True)
 
-        # 1. Graphique Contacts Précédents ou Non Contactés
-        # Diviser en deux groupes
+        # 1. Chart Previous Contacts or Not Contacted
+        # Divide into two groups
         df['group'] = df['previous'].apply(lambda x: 'not contacted' if x == 0 else 'contacted')
 
-        # Compter les valeurs de deposit pour chaque groupe
+        # Count deposit values for each group
         count_df = df.groupby(['group', 'deposit']).size().reset_index(name='count')
 
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts = count_df.groupby('group')['count'].transform('sum')
         count_df['percentage'] = (count_df['count'] / total_counts * 100).round(2)
 
-        # Création du bar plot avec Plotly Express
+        # Create bar plot with Plotly Express
         fig_previous = px.bar(
             count_df,
             x='group',
@@ -1450,11 +1452,11 @@ def show_data_viz_page():
             color_discrete_sequence=['#5242EA', '#FACA5E'],
         )
 
-        # 2. Graphique Nombre de Jours depuis le Dernier Contact (pdays)
-        # Filtrer les données pour exclure les valeurs de 'pdays' égales à -1
+        # 2. Chart Number of Days Since Last Contact (pdays)
+        # Filter data to exclude 'pdays' values equal to -1
         df_filtered = df[df['pdays'] != -1]
 
-        # Créer le box plot
+        # Create box plot
         fig_pdays = px.box(df_filtered,
              x='deposit',
              y='pdays',
@@ -1462,28 +1464,28 @@ def show_data_viz_page():
              color_discrete_sequence=['#5242EA', '#FACA5E'],
              )
 
-        # 3. Graphique Résultats de la Précédente Campagne (poutcome)
-        # Calculer les décomptes pour chaque catégorie de poutcome et deposit
+        # 3. Chart Results of the Previous Campaign (poutcome)
+        # Calculate counts for each poutcome and deposit category
         counts_poutcome = df.groupby(['poutcome', 'deposit']).size().unstack()
-        # Calculer les pourcentages
+        # Calculate percentages
         total_counts_poutcome = counts_poutcome.sum(axis=1)
         percent_yes_poutcome = (counts_poutcome['yes'] / total_counts_poutcome * 100).round(2)
         percent_no_poutcome = (counts_poutcome['no'] / total_counts_poutcome * 100).round(2)
-        # Transformer les données pour Plotly Express
+        # Transform data for Plotly Express
         df_plot_poutcome = pd.melt(counts_poutcome.reset_index(), id_vars=['poutcome'], value_vars=['yes', 'no'],
                   var_name='deposit', value_name='count')
 
-        # Ajouter les pourcentages calculés
+        # Add calculated percentages
         df_plot_poutcome['percent'] = percent_yes_poutcome.tolist() + percent_no_poutcome.tolist()
 
-        # Créer le graphique avec Plotly Express
+        # Create chart with Plotly Express
         fig_poutcome = px.bar(df_plot_poutcome, x='poutcome', y='count', color='deposit', barmode='group',
-             text=df_plot_poutcome['percent'].apply(lambda x: f"{x:.2f}%"),  # ajouter le signe % aux pourcentages
-             color_discrete_sequence=['#5242EA', '#FACA5E'],  # configurer les couleurs correctes
-             hover_data={'count': True, 'percent': ':.2f%'}  # afficher les détails au survol
+             text=df_plot_poutcome['percent'].apply(lambda x: f"{x:.2f}%"),  # add % sign to percentages
+             color_discrete_sequence=['#5242EA', '#FACA5E'],  # configure correct colors
+             hover_data={'count': True, 'percent': ':.2f%'}  # show details on hover
              )
 
-        # Création des subplots
+        # Create subplots
         fig = make_subplots(
             rows=1, cols=3,
             subplot_titles=(
@@ -1493,21 +1495,21 @@ def show_data_viz_page():
             )
         )
 
-        # Ajouter fig_previous
+        # Add fig_previous
         for trace in fig_previous['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=1)
 
-        # Ajouter fig_pdays
+        # Add fig_pdays
         for trace in fig_pdays['data']:
             trace.showlegend = False
             fig.add_trace(trace, row=1, col=2)
 
-        # Ajouter fig_poutcome
+        # Add fig_poutcome
         for trace in fig_poutcome['data']:
             fig.add_trace(trace, row=1, col=3)
 
-        # Mise à jour de la mise en page
+        # Update layout
         fig.update_layout(
             height=600,
             width=1400,
@@ -1524,7 +1526,7 @@ def show_data_viz_page():
         fig.update_xaxes(title_text='Results of previous campaign (poutcome)', row=1, col=3)
         fig.update_yaxes(title_text='Number of deposits', row=1, col=3)
 
-        # Afficher la figure dans Streamlit
+        # Display the figure in Streamlit
         st.plotly_chart(fig)
 
         st.markdown("**Observation**")
@@ -1539,24 +1541,24 @@ def show_data_viz_page():
         - **Success of the previous campaign**: A large part of the data is unknown. It is still interesting to note that a customer who has subscribed to a product from a previous campaign (success), are very inclined to subscribe to the deposit of the current campaign: 91% of them have subscribed to the deposit.
         """)
         st.divider()
-        # Section 5: Conclusion Analyse
+        # Section 5: Conclusion Analysis
         #st.markdown("""
         #<a id="conclusion_analyse"></a>
-        ### Conclusion Analyse variables explicatives vs variable cible
+        ### Conclusion Analysis explanatory variables vs target variable
         #""", unsafe_allow_html=True)
 
-# PAGE3 PRE PROCESSING
+# PAGE3 PREPROCESSING
 def show_preprocessing_page():
     st.title("Pre-processing")
-    # Charger les données
+    # Load data
     df = load_data()
-    # Utilisation des fonctions de pré-processing
+    # Use preprocessing functions
     #preprocessed_data = preprocess_data(df)
     #st.write(preprocessed_data)
     st.markdown("#### Data preparation before applying classification algorithms")
     st.header("Pre-processing approach")
     
-    # TABS CONTAINERS PRE PROCESSING
+    # TABS CONTAINERS PREPROCESSING
     tab1, tab2, tab3, tab4 = st.tabs(["Preprocessing", "Game Split", "Standardization and Encodings", "Pipeline"])
     with tab1:
         st.markdown("#### Pre-processing")
@@ -1616,9 +1618,9 @@ def show_preprocessing_page():
         st.divider()
         
         st.markdown("#### Split Train / Test")
-        # Chemin de l'image
+        # Path to the image
         image_path_traintest = "/tmp/files/images/traintest.jpg"
-        #Afficher l'image
+        #Display the image
         st.image(image_path_traintest)
 
         st.markdown("""
@@ -1633,7 +1635,7 @@ def show_preprocessing_page():
     X_train.shape, X_test.shape
                 """, language='python')
         X_train, X_test, y_train, y_test = split_train_test(features, target, test_size=0.25, random_state=42)
-        # Afficher les formes de X_train et X_test
+        # Display the shapes of X_train and X_test
         st.write(f"Dimensions de X_train: {X_train.shape}")
         st.write(f"Dimensions de X_test: {X_test.shape}")
     
@@ -1642,7 +1644,7 @@ def show_preprocessing_page():
         st.markdown("""
         - **LabelEncoder** of the target variable ‘deposit’.
         - **Cyclic encoding** of temporal variables: 'month', 'day'.
-        - **RobustScaler** for numeric variables: 'balance', 'duration', 'campaign', 'previous', ‘pdays_days’.
+        - **RobustScaler** for numeric variables: 'balance', 'duration', 'campaign', 'previous’, ‘pdays_days’.
         - **LabelEncoder** of binary categorical variables (yes/no): 'default', 'housing', loan', ‘pdays_contact’.
         - **OneHotEncoder** of categorical variables: 'job', 'marital', 'contact', 'poutcome'.
         - **OrdinalEncoder** of ordinal variables: 'age', 'education'.
@@ -1650,9 +1652,9 @@ def show_preprocessing_page():
 
     with tab4:
         st.markdown("#### Pipeline Approach")
-        # Chemin de l'image
+        # Path to the image
         image_path_pipeline = "/tmp/files/images/pipeline.jpg"
-        #Afficher l'image
+        #Display the image
         st.image(image_path_pipeline)
         st.markdown("Thanks to a pipeline, we were able to quickly generate 4 different pre-processings, then tested on different Machine Learning algorithms:")
         st.markdown("""
@@ -1666,24 +1668,24 @@ def show_preprocessing_page():
         So this is the pipeline used below: """)
         st.divider()
         st.subheader("Pipeline")
-        # Chargement des données
+        # Load data
         df = load_data()
-        # Prétraitement initial
+        # Initial preprocessing
         X_train, X_test, y_train, y_test = preprocess_data(df)
         
-        # Vérifier et convertir en DataFrame si ce sont des Series
+        # Check and convert to DataFrame if they are Series
         if isinstance(y_train, pd.Series):
             y_train = y_train.to_frame(name='Deposit')
         if isinstance(y_test, pd.Series):
             y_test = y_test.to_frame(name='Deposit')
 
-        # Convertir X_train et X_test en DataFrames si nécessaire et trier par index
+        # Convert X_train and X_test to DataFrames if necessary and sort by index
         X_train = pd.DataFrame(X_train).sort_index()
         X_test = pd.DataFrame(X_test).sort_index()
         y_train = y_train.sort_index()
         y_test = y_test.sort_index()
         
-        # Menu déroulant pour choisir l'affichage des résultats
+        # Dropdown menu to choose the display of results
         option = st.selectbox(
             "**Show datasets before or after pre-processing**",
             ["Before Pipeline", "After Pipeline"]
@@ -1709,7 +1711,7 @@ def show_preprocessing_page():
             st.dataframe(y_test.head())
 
         elif option == "After Pipeline":
-            # Appliquer le prétraitement et transformation
+            # Apply preprocessing and transformation
             X_train_processed_df, X_test_processed_df, y_train_processed_df, y_test_processed_df = preprocess_and_transform(X_train, X_test, y_train, y_test)
             st.markdown("##### After Pipeline")
             st.write("**Shapes of processed datasets:**")
@@ -1727,7 +1729,7 @@ def show_preprocessing_page():
             st.dataframe(y_test_processed_df.head())
 
 
-# PAGE4 MODELISATION
+# PAGE4 MODELING
 def show_modelling_page():
     initialize_results()
     st.title('Modeling')
@@ -1764,25 +1766,25 @@ def show_modelling_page():
                     - Decision Tree """)
         st.write("")     
         st.markdown("##### Performances")
-        # Chemin de l'image
+        # Path to the image
         image_path_perf11 = "/tmp/files/images/perf11.png"
-        #Afficher l'image
+        #Display the image
         st.image(image_path_perf11)
         st.write("")
         st.markdown("##### Feature importances")
         st.markdown("For the 3 best performing models")
-        # Créez un menu déroulant pour sélectionner l'image à afficher
+        # Create a dropdown menu to select the image to display
         option = st.selectbox(
         'Choose the model to display:',
         ['Random Forest', 'XGBoost', 'LightGBM']
        )
-        # Définir les chemins des images
+        # Define image paths
         image_paths = {
        'Random Forest': "/tmp/files/images/fi_rf.png",
        'XGBoost': "/tmp/files/images/fi_xg.png",
        'LightGBM': "/tmp/files/images/fi_gbm.png"
        }
-        # Afficher l'image en fonction de la sélection
+        # Display the image based on the selection
         st.image(image_paths[option])
         st.markdown("##### Observation")
         st.markdown("""
@@ -1798,14 +1800,14 @@ def show_modelling_page():
         st.markdown("#### Training without Duration")
         st.write("")
         with st.expander('**Pre-processing Without Duration**'):
-            # Charger les données
+            # Load data
             df = load_data()
             
-            # Pré-traitement des données
+            # Preprocess data
             X_train, X_test, y_train, y_test = preprocess_data(df)
             X_train_processed_df, X_test_processed_df, y_train_processed_df, y_test_processed_df = preprocess_and_transform(X_train, X_test, y_train, y_test)
         
-            # Appel à la fonction pour supprimer la colonne 'duration'
+            # Call the function to remove the 'duration' column
             X_train_processed_df, X_test_processed_df = remove_duration(X_train_processed_df, X_test_processed_df)
     
             # Displaying the shapes of the datasets after removing 'duration'
@@ -1821,9 +1823,9 @@ def show_modelling_page():
 
         st.divider()     
         st.markdown("##### Performance")
-        # Chemin de l'image
+        # Path to the image
         image_path_perfsd = "/tmp/files/images/perfsd.jpg"
-        #Afficher l'image
+        #Display the image
         st.image(image_path_perfsd)
         st.write("")     
         st.markdown("###### Observation")
@@ -1837,19 +1839,19 @@ def show_modelling_page():
         st.write("")
         st.markdown("##### Feature importances")
         st.markdown("For the 3 best performing models")
-        # Créez un menu déroulant pour sélectionner l'image à afficher
+        # Create a dropdown menu to select the image to display
         option2 = st.selectbox(
         'Choose the model to display:',
        ['Random Forest', 'XGBoost', 'LightGBM'],
        key='feature_importances_selectbox'
        )
-        # Définir les chemins des images
+        # Define image paths
         image_paths2 = {
        'Random Forest': "/tmp/files/images/fisd_rf.png",
        'XGBoost': "/tmp/files/images/fisd_xg.png",
        'LightGBM': "/tmp/files/images/fisd_gbm.jpg"
        }
-        # Afficher l'image en fonction de la sélection
+        # Display the image based on the selection
         st.image(image_paths2[option2])
         st.markdown("###### Observation")
         st.markdown("""
@@ -1859,13 +1861,13 @@ def show_modelling_page():
 
     with tab4:
         st.markdown("#### GridSearchCV")
-        # Créez un menu déroulant pour sélectionner le modèle
+        # Create a dropdown menu to select the model
         model_option = st.selectbox(
         '**Show best model settings**:',
         ['Random Forest', 'XGBoost', 'LightGBM'],
         key='model_selectbox'
         )
-        # Définir les textes pour chaque modèle
+        # Define texts for each model
         model_texts = {
         'Random Forest': """
         Random Forest is a decision tree model that uses multiple trees to improve accuracy and avoid overfitting.
@@ -1876,17 +1878,17 @@ def show_modelling_page():
         'XGBoost': """
         XGBoost is an implementation of gradient boosting that is efficient and performant for classification and regression tasks.
         - Runtime: 1min 29s
-        - Best parameters found for XGBoost: {'colsample_bytree': 0.8, 'learning_rate': 0.01, 'max_depth': 7, 'n_estimators': 300, 'subsample': 0.8}
+        - Best parameters found for XGBoost: {'colsample_bytree': 0.8, 'learning_rate': 0.01, 'max_depth': 7, 'n_estimators': 100, 'subsample': 0.8}
         - Best score: 0.7360
         """,
         'LightGBM': """
         LightGBM is a tree-based gradient boosting framework that is designed to be distributed and efficient with large data capacity.
         - Runtime: 35s
-        - Best parameters found for LightGBM: {'colsample_bytree': 0.8, 'learning_rate': 0.01, 'n_estimators': 200, 'num_leaves': 31, 'subsample': 0.8}
+        - Best parameters found for LightGBM: {'colsample_bytree': 0.8, 'learning_rate': 0.01, 'n_estimators': 100, 'num_leaves': 31, 'subsample': 0.8}
         - Best score: 0.7373
         """
         }
-        # Afficher le texte correspondant au modèle sélectionné
+        # Display the text corresponding to the selected model
         st.markdown(model_texts[model_option])
 
     with tab5:
@@ -1897,14 +1899,14 @@ def show_modelling_page():
         button7 = col3.button("XGBoost Model")
         button8 = col4.button("Performance Comparison")
     
-        # Vérifiez si un bouton est cliqué
+        # Check if a button is clicked
         button_clicked = button5 or button6 or button7 or button8
 
-        #Définir button5 par défaut à l'ouverture de la page
-        if not button_clicked or button5:
+        #Set button5 as default when opening the page
+        if button5:
             st.markdown("#### Random Forest Model")
     
-            # Définir les hyperparamètres du modèle RandomForest
+            # Define hyperparameters for the RandomForest model
             rf_params = {
                 'max_depth': 10,
                 'max_features': 'sqrt',
@@ -1913,61 +1915,61 @@ def show_modelling_page():
                 'n_estimators': 100,
                 'random_state': 42
             }
-            # Utilisez get_model pour obtenir le modèle
+            # Use get_model to get the model
             model_rf = get_model('rf')
             if model_rf is not None:train_and_evaluate_and_save(RandomForestClassifier, rf_params, 'Random Forest', 'results_rf')
             
         if button6:
             st.markdown("#### LightGBM Model")
+            with st.spinner("Wait for it...", show_time=True):
+                time.sleep(25)
     
-            # Définir les hyperparamètres du modèle LightGBM
+            # Define hyperparameters for the LightGBM model
             lgb_params = {
                 'colsample_bytree': 0.8,
                 'learning_rate': 0.01,
-                'n_estimators': 200,
+                'n_estimators': 100,
                 'num_leaves': 31,
                 'subsample': 0.8,
                 'random_state': 42
             }
-            # Utilisez get_model pour obtenir le modèle
+            # Use get_model to get the model
             model_lgb = get_model('lgb')
             if model_lgb is not None:
-                train_and_evaluate_and_save(LGBMClassifier, lgb_params, 'LightGBM', folder+'results_lgb')
+                train_and_evaluate_and_save(LGBMClassifier, lgb_params, 'LightGBM', model_folder+'results_lgb')
 
 
 
         if  button7:
             st.markdown("#### XGBoost Template")
     
-            # Définir les hyperparamètres du modèle XGBoost
+            # Define hyperparameters for the XGBoost model
             xgb_params = {
                 'colsample_bytree': 0.8,
                 'learning_rate': 0.01,
                 'max_depth': 7,
-                'n_estimators': 300,
+                'n_estimators': 100,
                 'subsample': 0.8,
                 'random_state': 42
             }
 
-            # Utilisez get_model pour obtenir le modèle
+            # Use get_model to get the model
             model_xgb = get_model('xgb')
             if model_xgb is not None:
-                train_and_evaluate_and_save(XGBClassifier, xgb_params, 'XGBoost', folder+'results_xgb')
-
-
+                train_and_evaluate_and_save(XGBClassifier, xgb_params, 'XGBoost', model_folder+'results_xgb')
 
         
 
         if  button8:
             st.markdown("#### Model Comparison")
 
-            # Récupérer les résultats des modèles depuis st.session_state
+            # Retrieve model results from st.session_state
             results_rf = st.session_state.get('results_rf')
             results_xgb = st.session_state.get('results_xgb')
             results_lgb = st.session_state.get('results_lgb')
 
             if results_rf is not None and results_xgb is not None and results_lgb is not None:
-                # Créer un DataFrame avec les résultats des modèles
+                # Create a DataFrame with model results
                 results = {
                     'Model': ['Random Forest', 'XGBoost', 'LightGBM'],
                     'Accuracy': [results_rf['accuracy'], results_xgb['accuracy'], results_lgb['accuracy']],
@@ -1977,35 +1979,35 @@ def show_modelling_page():
                 }
                 results_df = pd.DataFrame(results)
 
-                # Arrondir les scores à deux décimales
+                # Round scores to two decimals
                 results_df_rounded = results_df.round(3)
 
-                # Affichage du tableau récapitulatif
+                # Display summary table
                 st.write("**Model Performance Summary:**")
                 st.write(results_df_rounded)
 
-                # Créer un graphique des scores avec Plotly
+                # Create a chart of scores with Plotly
                 results_df_melted = results_df.melt(id_vars='Model', var_name='Metric', value_name='Score')
                 fig = px.bar(results_df_melted, y='Model', x='Score', color='Metric', barmode='group',
                              color_discrete_sequence=px.colors.qualitative.Pastel,
                             labels={'Score': 'Score', 'Metric': 'Metric'},
                              text='Score')
-                # Ajuster la graduation de l'axe des X pour une meilleure lisibilité
+                # Adjust the graduation of the X-axis for better readability
                 fig.update_xaxes(
                     title_text='Score',
-                    tickformat=".2f",  # Format des ticks pour afficher deux décimales
-                    dtick=0.1,  # Intervalle des ticks (0.1 pour plus de précision)
-                    range=[0, 1]  # Plage personnalisée 
+                    tickformat=".2f",  # Tick format to display two decimals
+                    dtick=0.1,  # Tick interval (0.1 for more precision)
+                    range=[0, 1]  # Custom range 
                 )
 
-                # Ajuster la hauteur du graphique
+                # Adjust the height of the chart
                 fig.update_layout(
-                    height=500,  # Hauteur personnalisée en pixels (ajustez selon vos besoins)
+                    height=500,  # Custom height in pixels (adjust as needed)
                     title_text='Comparison of Classification Models',
                     xaxis_title='Score',
                     yaxis_title='Model'
                 )
-                # Ajuster le texte des barres pour qu'il affiche les scores arrondis à trois décimales
+                # Adjust the text of the bars to display scores rounded to three decimals
                 fig.update_traces(texttemplate='%{text:.3f}')
                 st.plotly_chart(fig)
 
@@ -2115,7 +2117,7 @@ def show_conclusion_page():
             """)
 
 
-# Fonction principale pour afficher la page sélectionnée
+# Main function to display the selected page
 def main():
     if page == "Project":
         show_projet_page()

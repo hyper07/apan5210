@@ -36,13 +36,19 @@ def sendPrompt(prompt):
     return response
 
 
+
 st.title("Download LLM Models")
 st.write("Check the LLM models from the following links:")
 st.write("[OPEN SOURCE LLMs](https://ollama.com/library)")
+st.write("[OLLAMA APIs](https://github.com/ollama/ollama/blob/main/docs/api.md)")
 
 st.image(file_path+"/images/select_llm.png", width=700)
 st.write("Run 'docker exec -ti apan-ollama ollama pull llama3.2:1b' on the command to download the model")
 st.image(file_path+"/images/download_llm.png", width=700)
+
+
+
+
 
 
 st.title("Sample Chat UI")

@@ -23,7 +23,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
 
-file_path = os.getcwd()
+file_path = "/tmp/files"
 llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:37869", verbose=True)
 
 sample_file_path = ''
@@ -46,6 +46,7 @@ st.html(f"<style>{CSS}</style>")
 st.title("Download LLM Models")
 st.write("Check the LLM models from the following links:")
 st.write("[OPEN SOURCE LLMs](https://ollama.com/library)")
+st.write("[OLLAMA APIs](https://github.com/ollama/ollama/blob/main/docs/api.md)")
 
 st.image(file_path+"/images/select_llm.png", width=700)
 st.write("Run 'docker exec -ti apan-ollama ollama pull llama3.2:1b' on the command to download the model")

@@ -3,6 +3,7 @@ services:
   apan5210-streamlit-app:
       image: streamlit-python3.11:latest
       container_name: apan5210-streamlit-app
+      env_file: .env
       build:
           context: .
           dockerfile: ./docker/streamlit/Dockerfile
