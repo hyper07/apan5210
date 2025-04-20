@@ -26,6 +26,11 @@ from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import joblib
 import time
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
 
 #sidebar
 # st.sidebar.title("Example")
@@ -33,17 +38,17 @@ pages=["Project", "Dataset", "Data Visualization", "Preprocessing", "Modeling", 
 page=st.sidebar.radio("Menu", pages)
 sample_folder = '/tmp/files/sample/'
 model_folder = '/tmp/files/models/'
-output_folder = '/tmp/files/result/'
 
 # FUNCTIONS FOR DATA AND RESOURCES --------------------------------------------------------------
 # LOADING SAVED MODELS
 #@st.cache_resource
 def load_model(filename):
     """
-    Load a model from a file with joblib.
+    Load a model from a file with joblib, ensuring compatibility with scikit-learn versions.
     """
     try:
-        model = joblib.load(model_folder+filename)
+        # Ensure compatibility by using scikit-learn's joblib utilities
+        model = joblib.load(model_folder + filename)
         return model
     except FileNotFoundError:
         st.error(f"The template {filename} could not be loaded.")
@@ -54,17 +59,21 @@ def get_model(model_name):
     """
     Returns the requested model, loading it if necessary.
     """
+
     if model_name == 'rf':
         if 'model_rf' not in st.session_state:
-            st.session_state['model_rf'] = load_model(model_folder+'random_forest_model.pkl')
+            st.session_state['model_rf'] = load_model('random_forest_model.pkl')
+
         return st.session_state['model_rf']
     elif model_name == 'xgb':
         if 'model_xgb' not in st.session_state:
-            st.session_state['model_xgb'] = load_model(model_folder+'xgboost_model.pkl')
+            st.session_state['model_xgb'] = load_model('xgboost_model.pkl')
+        
         return st.session_state['model_xgb']
     elif model_name == 'lgb':
         if 'model_lgb' not in st.session_state:
-            st.session_state['model_lgb'] = load_model(model_folder+'lightgbm_model.pkl')
+
+            st.session_state['model_lgb'] = load_model('lightgbm_model.pkl')
         return st.session_state['model_lgb']
 
 # Function to initialize results
@@ -83,7 +92,7 @@ def save_model(model, filename):
     """
     Save a model to a file with joblib.
     """
-    joblib.dump(model, model_folder+filename)
+    joblib.dump(model, filename)
 
 # FUNCTION TO LOAD DATA FOR THE DATAFRAME
 @st.cache_data
@@ -342,10 +351,10 @@ def train_and_evaluate_and_save(model_class, params, model_name, key):
     
     # Load and preprocess data
     df = load_data()
-    df = df.head(100)
+    # df = df.head(100)
     X_train, X_test, y_train, y_test = preprocess_data(df)
     X_train_processed_df, X_test_processed_df, y_train_processed_df, y_test_processed_df = preprocess_and_transform(X_train, X_test, y_train, y_test)
-    
+
     # Remove the 'duration' column from the processed datasets
     X_train_processed_df, X_test_processed_df = remove_duration(X_train_processed_df, X_test_processed_df)
 
@@ -353,7 +362,7 @@ def train_and_evaluate_and_save(model_class, params, model_name, key):
     results = train_and_evaluate_model(model, X_train_processed_df, X_test_processed_df, y_train_processed_df['Deposit'], y_test_processed_df['Deposit'])
     
     # Save the model
-    save_model(model, f'{model_name.lower()}_model_1.pkl')
+    save_model(model, f'{model_folder+model_name.lower()}_model.pkl')
     
     # Store results in st.session_state
     st.session_state[key] = results
@@ -547,7 +556,7 @@ By identifying the key success factors of previous campaigns, we can help the fi
     st.write("")
 
 # PAGE1 DATASET
-def show_jeu_de_donnees_page():
+def show_data_set_page():
     st.title("The dataset")
     st.markdown('The bank.csv dataset is based on the UCI Bank Marketing dataset, which can be read here: http://archive.ics.uci.edu/ml/datasets/Bank+Marketing. Creators: S. Moro, P. Rita, P. Cortez.')
     st.header('The variables')
@@ -1915,14 +1924,16 @@ def show_modelling_page():
                 'n_estimators': 100,
                 'random_state': 42
             }
+
             # Use get_model to get the model
             model_rf = get_model('rf')
-            if model_rf is not None:train_and_evaluate_and_save(RandomForestClassifier, rf_params, 'Random Forest', 'results_rf')
+            if model_rf is not None:
+                train_and_evaluate_and_save(RandomForestClassifier, rf_params, 'Random_Forest', model_folder+'results_rf')
             
         if button6:
             st.markdown("#### LightGBM Model")
-            with st.spinner("Wait for it...", show_time=True):
-                time.sleep(25)
+            logger.debug('This is a debug message')
+
     
             # Define hyperparameters for the LightGBM model
             lgb_params = {
@@ -2122,7 +2133,7 @@ def main():
     if page == "Project":
         show_projet_page()
     elif page == "Dataset":
-        show_jeu_de_donnees_page()
+        show_data_set_page()
     elif page == "Data Visualization":
         show_data_viz_page()
     elif page == "Preprocessing":

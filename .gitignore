@@ -22,3 +22,5 @@ work/.gitkeep
 /work/.cache
 .DS_Store
 .DS_Store
+files/.DS_Store
+app-streamlit/.DS_Store
