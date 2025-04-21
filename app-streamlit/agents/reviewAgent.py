@@ -24,21 +24,31 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
 
-class Reviewer:
-    def __init__(self, var1="deepseek-r1:1.5b", var2="http://host.docker.internal:37869"):
+class ReviewAgent:
+    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 
-    def test(self, prompt = ''):  
-
-        return 'Test Reviewer'
+    def getModel(self):  
+        return self.llmModel
+    
+    def setModel(self, model):  
+        self.llmModel = model
+        return self
+    
+    def getUrl(self):  
+        return self.llmUrl
+    
+    def setUrl(self, url):
+        self.llmUrl = url
+        return self
     
     def sendPrompt(self, prompt):
         
     # Sze Ning 's edit
     # MODIFY HERE: Treat 'prompt' as the full narrative text from Agents 1–5
         file_path = os.getcwd()
-        llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:37869", verbose=True)
+        llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
 
     # MODIFY HERE: Construct a review prompt that references outputs from Agents 1–5
         review_prompt = (

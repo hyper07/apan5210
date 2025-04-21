@@ -27,13 +27,16 @@ import plotly.figure_factory as ff
 import joblib
 import time
 import logging
+from contollers.serviceController import ServiceController
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
 
+ServiceController.initialize_llms_session_state()
+
 #sidebar
-# st.sidebar.title("Example")
+#st.sidebar.title("Example")
 pages=["Project", "Dataset", "Data Visualization", "Preprocessing", "Modeling", "Conclusion"]
 page=st.sidebar.radio("Menu", pages)
 sample_folder = '/tmp/files/sample/'
@@ -1594,9 +1597,9 @@ def show_preprocessing_page():
         #EDUCATION
         st.markdown("**Variable Education**")
         st.code("""
-    most_frequent = df[df['education'] != 'unknown']['education'].mode()[0]
-    df['education'] = df['education'].replace('unknown', most_frequent)
-    df['education'].unique()
+        most_frequent = df[df['education'] != 'unknown']['education'].mode()[0]
+        df['education'] = df['education'].replace('unknown', most_frequent)
+        df['education'].unique()
                 """, language='python')
         st.write("Modalities of Education after replacing the value 'unknown' with the most frequent mode:")
         df = replace_unknown_education(df)
@@ -1606,10 +1609,10 @@ def show_preprocessing_page():
         #PDAYS
         st.markdown("**Feature Engineering p-days**")
         st.code("""
-    df['pdays_contact'] = df['pdays'].apply(lambda x: 'no' if x == -1 else 'yes')
-    df['pdays_days'] = df['pdays'].apply(lambda x: 0 if x == -1 else x)
-    df = df.drop('pdays', axis = 1)
-    df.head()
+        df['pdays_contact'] = df['pdays'].apply(lambda x: 'no' if x == -1 else 'yes')
+        df['pdays_days'] = df['pdays'].apply(lambda x: 0 if x == -1 else x)
+        df = df.drop('pdays', axis = 1)
+        df.head()
                 """, language='python')
         st.write("DataFrame df after Pdays Feature Engineering:")
         df = transform_pdays(df)
@@ -1639,9 +1642,9 @@ def show_preprocessing_page():
         - the test part contains 25% of the initial dataset
                     """)
         st.code("""
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.25, random_state = 42)
-    X_train.shape, X_test.shape
+        from sklearn.model_selection import train_test_split
+        X_train, X_test, y_train, y_test = train_test_split(features, target, test_size = 0.25, random_state = 42)
+        X_train.shape, X_test.shape
                 """, language='python')
         X_train, X_test, y_train, y_test = split_train_test(features, target, test_size=0.25, random_state=42)
         # Display the shapes of X_train and X_test
@@ -1913,6 +1916,9 @@ def show_modelling_page():
 
         #Set button5 as default when opening the page
         if button5:
+
+            with st.spinner("Analyzing...", show_time=True):
+                time.sleep(2)
             st.markdown("#### Random Forest Model")
     
             # Define hyperparameters for the RandomForest model
@@ -1931,6 +1937,8 @@ def show_modelling_page():
                 train_and_evaluate_and_save(RandomForestClassifier, rf_params, 'Random_Forest', model_folder+'results_rf')
             
         if button6:
+            with st.spinner("Analyzing...", show_time=True):
+                time.sleep(2)
             st.markdown("#### LightGBM Model")
             logger.debug('This is a debug message')
 
@@ -1949,9 +1957,9 @@ def show_modelling_page():
             if model_lgb is not None:
                 train_and_evaluate_and_save(LGBMClassifier, lgb_params, 'LightGBM', model_folder+'results_lgb')
 
-
-
         if  button7:
+            with st.spinner("Analyzing...", show_time=True):
+                time.sleep(2)
             st.markdown("#### XGBoost Template")
     
             # Define hyperparameters for the XGBoost model
@@ -2042,7 +2050,9 @@ def show_modelling_page():
             - **F1 Score**: Harmonic mean between Precision and Recall
             - Between 69 and 70%
             - An F1 Score of 70% indicates a good balance between the ability to correctly identify interested customers (recall) and the accuracy of the predictions (precision).
-            - **Classification**:
+            """)
+            st.markdown("#### Classification:")
+            st.markdown("""
             - **True Positives**: The Random Forest model has the highest number of true positives (821 vs. 806 XGBoost and 813 LightGBM), which means that it has identified the highest number of truly interested customers for the deposit.
             - **False Negatives**: The Random Forest model has the fewest false negatives (520 vs. 535 XGBoost and 528 LightGBM), meaning that it missed the fewest truly interested customers.
             - **False Positives**: The XGBoost and LightGBM models have the fewest false positives (173 XGBoost and 170 LightGBM vs. 190 for Random Forest), meaning that these algorithms made the fewest errors in identifying uninterested customers as interested.
@@ -2064,32 +2074,32 @@ def show_conclusion_page():
         # col1 = st.columns(1)
         # with col1:
         st.markdown("""Data analysis allows targeting the bank's customers most likely to make a term deposit as well as the most effective campaign strategy.
-- A young adult or retired customer, of a relatively higher CSP, without current loans, with a higher average account balance.
-- A campaign from February to April and from September to December, with at least 1 customer contact beforehand, and call durations of at least 4 minutes.
+        - A young adult or retired customer, of a relatively higher CSP, without current loans, with a higher average account balance.
+        - A campaign from February to April and from September to December, with at least 1 customer contact beforehand, and call durations of at least 4 minutes.
         """)
         st.subheader('Marketing Insights')
         st.markdown(""" Other avenues should not be overlooked:
-    - Raise awareness among canvassing and marketing teams about the customer profile and the most effective strategies
-    - Diversify customer contact channels (mailing, social networks, etc.)
-    - Collect more data using these diversified channels
-    - Also review the customer approach and the speech to reach other targets
+        - Raise awareness among canvassing and marketing teams about the customer profile and the most effective strategies
+        - Diversify customer contact channels (mailing, social networks, etc.)
+        - Collect more data using these diversified channels
+        - Also review the customer approach and the speech to reach other targets
         """)
 
 
     with tab2:
         st.subheader('Machine Learning for targeting')
         st.markdown(""" By taking into account the call duration, the models are very efficient. However, it is preferable to use a model that is applicable on the real and a priori basis of customer data.
-    - By deploying one of these algorithms on the bank's customer dataset, it is possible to predict customers likely to subscribe to this type of banking product.
-    - This will allow a correct prediction of at least 60% of customers willing to make a deposit.
-    - The choice of model among LightGBM, XGBoost and Random Forest also depends on the infrastructure available for deployment and the data set on which the predictions will be made for the next campaign (dimensions of the game, parameterization capacity, etc.).
-    - More information below on the constraints of the models.
+        - By deploying one of these algorithms on the bank's customer dataset, it is possible to predict customers likely to subscribe to this type of banking product.
+        - This will allow a correct prediction of at least 60% of customers willing to make a deposit.
+        - The choice of model among LightGBM, XGBoost and Random Forest also depends on the infrastructure available for deployment and the data set on which the predictions will be made for the next campaign (dimensions of the game, parameterization capacity, etc.).
+        - More information below on the constraints of the models.
         """)
         st.write("")
         st.subheader('Continuous optimization')
         st.markdown(""" With each campaign, the collection of additional data will allow the models to refine their knowledge of customers and the predictive system will feed itself.
-    - With this prediction approach, coupled with the awareness of marketing agents, the next campaign can hope for better results - higher than the 47% success of the analyzed campaign.
-    - A contribution of additional data (Day and year to analyze the most favorable days for the campaign, customer transactions, feedback collection, etc.) would enrich the data to refine the models.
-    - The analysis of the next results and of each campaign will allow a process of continuous improvement to always better target, increase the subscription rate and ensure increased efficiency of future campaigns.
+        - With this prediction approach, coupled with the awareness of marketing agents, the next campaign can hope for better results - higher than the 47% success of the analyzed campaign.
+        - A contribution of additional data (Day and year to analyze the most favorable days for the campaign, customer transactions, feedback collection, etc.) would enrich the data to refine the models.
+        - The analysis of the next results and of each campaign will allow a process of continuous improvement to always better target, increase the subscription rate and ensure increased efficiency of future campaigns.
         """)
         st.write("")
 
@@ -2099,32 +2109,32 @@ def show_conclusion_page():
         with st.expander('**Model Information**'):
             st.divider()
             st.markdown(""" **Random Forest** is a decision tree model that uses multiple trees to improve accuracy and avoid overfitting.
-    - **Pros:**
-        - Robust to overfitting
-        - Good performance for large data
-    - **Cons:**
-        - Less interpretable than simple decision trees
-        - Can be slow to train for large data sets
+            - **Pros:**
+            - Robust to overfitting
+            - Good performance for large data
+            - **Cons:**
+            - Less interpretable than simple decision trees
+            - Can be slow to train for large data sets
             """)
             st.divider()
 
             st.markdown(""" **XGBoost** is an implementation of gradient boosting that is efficient and performant for classification and regression tasks.
-    - **Pros:**
-        - Very performant for classification and regression tasks
-        - Computationally efficient
-    - **Cons:**
-        - Complexity of hyperparameters to tune
-        - Can be prone to overfitting if poorly parameterized
+            - **Pros:**
+            - Very performant for classification and regression tasks
+            - Computationally efficient
+            - **Cons:**
+            - Complexity of hyperparameters to tune
+            - Can be prone to overfitting if poorly parameterized
             """)
         
             st.divider()
             st.markdown(""" **LightGBM** is a tree-based gradient boosting framework that is designed to be distributed and efficient with large data capacity.
-    - **Pros:**
-        - Very fast and efficient for large datasets
-        - Less memory consumed compared to other boosting models
-    - **Cons:**
-        - Less performant for small datasets
-        - Can be harder to interpret
+            - **Pros:**
+            - Very fast and efficient for large datasets
+            - Less memory consumed compared to other boosting models
+            - **Cons:**
+            - Less performant for small datasets
+            - Can be harder to interpret
             """)
 
 

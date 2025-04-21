@@ -22,18 +22,33 @@ import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
-class Analyzer:
-    def __init__(self, var1="deepseek-r1:1.5b", var2="http://host.docker.internal:37869"):
+class AnalyzerAgent:
+    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 
-    def test(self, prompt = ''):  
+    def getModel(self):  
 
-        return 'Test Analyzer'
+        return self.llmModel
+    
+    def setModel(self, model):  
+
+        self.llmModel = model
+
+        return self
+    
+    def getUrl(self):  
+
+        return self.llmUrl
+    
+    def setUrl(self, url):
+        self.llmUrl = url
+
+        return self
     
     def sendPrompt(self, prompt):   
         file_path = os.getcwd()
-        llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:37869", verbose=True)
+        llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:39870", verbose=True)
 
         sample_file_path = ''
         columns = []

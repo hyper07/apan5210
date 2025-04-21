@@ -14,20 +14,18 @@ import numpy as np
 import pandas as pd
 import os
 import time
-from agents.analyzer import Analyzer
-from agents.insightGenerator import InsightGenerator
-from agents.reportGenerator import ReportGenerator
-from agents.codeGenerator import CodeGenerator
-from agents.reviewer import Reviewer
-from agents.translater import Translater
+from contollers.agentController import AgentController
+from contollers.serviceController import ServiceController
 
-folder = '/tmp/files/sample/'
+
+ServiceController.initialize_llms_session_state()
+
 
 @st.cache_data
 def load_data():
     return pd.read_csv(folder+'bank.csv')
 
-# FONCTIONS PAGE2 JEU DE DONNEES
+# PAGE2 DATASET FUNCTIONS
 @st.cache_data
 def get_data_summary(df):
     return {
@@ -63,6 +61,9 @@ if 'template' not in st.session_state:
 
     """
 
+
+
+
 # Initialize prompt as a session state
 if 'prompt' not in st.session_state:
 
@@ -93,11 +94,11 @@ if 'vectorstore' not in st.session_state:
 
     # Set value of vectorstore key to Chroma 
     st.session_state.vectorstore = Chroma(persist_directory='db',
-                                          embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:37869',
+                                          embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:39870',
                                                                               model="deepseek-r1:1.5b")
                                           )
 if 'llm' not in st.session_state:
-    st.session_state.llm = Ollama(base_url="http://host.docker.internal:37869",
+    st.session_state.llm = Ollama(base_url="http://host.docker.internal:39870",
                                   model="deepseek-r1:1.5b",
                                   verbose=True,
                                   callback_manager=CallbackManager(
@@ -183,38 +184,35 @@ else:
     st.write("Please upload a PDF file.")
 
 
-# from agents.analyzer import Analyzer
-# from agents.reportGenerator import ReportGenerator
-# from agents.reviewer import Reviewer
-# from agents.translater import Translater
-
-
 left, middle, right = st.columns(3)
 if left.button("Analyzer button", use_container_width=True):
-    customAgent = Analyzer()
+    customAgent = AgentController.getAnalyzerAgent()
     left.markdown(customAgent.test())
 if left.button("ReportGenerator button", icon="😃", use_container_width=True):
-    customAgent = ReportGenerator()
+    customAgent = AgentController.getReportAgent()
     left.markdown(customAgent.test())
 if middle.button("Reviewer button", icon=":material/mood:", use_container_width=True):
-    customAgent = Reviewer()
+    customAgent = AgentController.getReviewAgent()
     middle.markdown(customAgent.test())
 if middle.button("Translater button", use_container_width=True):
-    customAgent = Translater()
+    customAgent = AgentController.getTranslateAgent()
     middle.markdown(customAgent.test())
 if right.button("Emoji button", icon="😃", use_container_width=True):
     right.markdown("You clicked the emoji button.")
 if right.button("Material button", icon=":material/mood:", use_container_width=True):
     right.markdown("You clicked the Material button.")    
 
+# Example usage
+model_list = st.session_state.llms
+st.markdown(f"- **List **: {model_list}")
 st.divider()
-st.header('Data Overview')
+st.header('Overview')
 # Charger les données
 df = load_data()
 # Obtenir le résumé des données
 data_summary = get_data_summary(df)
 #TABS CONTAINERS:
-tab1, tab2, tab3, tab4, tab5,tab6= st.tabs(["Overview", "Dimensions", "Statistics", "Types", "Nulls", "Duplicates"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Analyzer", "Code", "Statistics", "Report", "Review"])
 with tab1:
     st.code('df.head(10)')
     st.markdown("Overview of the first 10 lines")
@@ -243,8 +241,3 @@ with tab5:
     st.markdown("No missing values: ")
     st.code('df.isna().sum()')
     st.write(data_summary["missing_values"])
-with tab6:
-    st.markdown("No duplicates: ")
-    st.code('df[df.duplicated()]')
-    st.write(data_summary["duplicates"])
-    st.divider()

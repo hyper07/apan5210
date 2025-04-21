@@ -23,18 +23,28 @@ import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
-class ReportGenerator:
-    def __init__(self, var1="deepseek-r1:1.5b", var2="http://host.docker.internal:37869"):
+class TranslateAgent:
+    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 
-    def test(self, prompt = ''):  
-
-        return 'Test Reviewer'
+    def getModel(self):  
+        return self.llmModel
+    
+    def setModel(self, model):  
+        self.llmModel = model
+        return self
+    
+    def getUrl(self):  
+        return self.llmUrl
+    
+    def setUrl(self, url):
+        self.llmUrl = url
+        return self
     
     def sendPrompt(self, prompt):
         file_path = os.getcwd()
-        llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:37869", verbose=True)
+        llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
 
         sample_file_path = ''
         columns = []
@@ -60,6 +70,18 @@ class ReportGenerator:
                 st.session_state.messages = [
                     # {"role": "assistant", "content": "Please type short prompts (example: relathiship between {column name 1} and {column name 2})"}
                 ]
+        
+        ## by Jerry
+        presetting = "You are an AI language translator. \
+            Your primary task is to translate any input text into the target language. \
+            By default, translate all content into English unless the user specifies a different target language. \
+            \
+            The input may consist of one or multiple paragraphs, possibly drawn from various sources. \
+            Read the entire text carefully, understand the context, and ensure your translation \
+            preserves the original meaning, tone, and style wherever appropriate."
+                            
+        st.session_state.messages.append({"role":"system", "content":presetting})
+
 
         if prompt := st.chat_input("Your prompt"): 
             st.session_state.messages.append({"role": "user", "content": prompt})

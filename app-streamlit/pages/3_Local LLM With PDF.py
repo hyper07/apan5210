@@ -12,10 +12,14 @@ from langchain.memory import ConversationBufferMemory
 import streamlit as st
 import os
 import time
+from contollers.serviceController import ServiceController
+
+ServiceController.initialize_llms_session_state()
 
 
-file_path = "/tmp/files"
-llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:37869", verbose=True)
+file_path = "/tmp/files/"
+data_path = "/tmp/files/data/"
+llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:39870", verbose=True)
 
 sample_file_path = ''
 columns = []
@@ -40,7 +44,13 @@ st.write("[OPEN SOURCE LLMs](https://ollama.com/library)")
 st.write("[OLLAMA APIs](https://github.com/ollama/ollama/blob/main/docs/api.md)")
 
 st.image(file_path+"/images/select_llm.png", width=700)
-st.write("Run 'docker exec -ti apan-ollama ollama pull llama3.2:1b' on the command to download the model")
+st.write("")
+st.write("")
+st.write("")
+st.markdown("Run " \
+"```docker exec -ti apan-ollama ollama pull llama3.2:1b" \
+"```" \
+"on the terminal to download the model")
 st.image(file_path+"/images/download_llm.png", width=700)
 
 
@@ -101,11 +111,11 @@ if 'vectorstore' not in st.session_state:
 
     # Set value of vectorstore key to Chroma 
     st.session_state.vectorstore = Chroma(persist_directory='db',
-                                          embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:37869',
+                                          embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:39870',
                                                                               model="deepseek-r1:1.5b")
                                           )
 if 'llm' not in st.session_state:
-    st.session_state.llm = Ollama(base_url="http://host.docker.internal:37869",
+    st.session_state.llm = Ollama(base_url="http://host.docker.internal:39870",
                                   model="deepseek-r1:1.5b",
                                   verbose=True,
                                   callback_manager=CallbackManager(
@@ -126,13 +136,13 @@ for message in st.session_state.chat_history:
         st.markdown(message["message"])
 
 if uploaded_file is not None:
-    if not os.path.isfile("files/"+uploaded_file.name+".pdf"):
+    if not os.path.isfile(data_path+uploaded_file.name+".pdf"):
         with st.status("Analyzing your document..."):
             bytes_data = uploaded_file.read()
-            f = open("files/"+uploaded_file.name+".pdf", "wb")
+            f = open(data_path+uploaded_file.name+".pdf", "wb")
             f.write(bytes_data)
             f.close()
-            loader = PyPDFLoader("files/"+uploaded_file.name+".pdf")
+            loader = PyPDFLoader(data_path+uploaded_file.name+".pdf")
             data = loader.load()
 
             # Initialize text splitter
@@ -188,4 +198,10 @@ if uploaded_file is not None:
 
 
 else:
-    st.write("Please upload a PDF file.")
+    st.info(
+        f"""
+            👆 Upload a .pdf file first.
+            """
+    )
+
+    st.stop()

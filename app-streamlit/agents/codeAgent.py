@@ -6,8 +6,8 @@ load_dotenv()
 
 ########
 ## presetting by Jing
-class CodeGenerator:
-    def __init__(self):
+class CodeAgent:
+    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.api_key  = os.getenv("DEEPSEEK_API_KEY")
         if not self.api_key:
             raise ValueError("Please set DEEPSEEK_API_KEY in your .env file")

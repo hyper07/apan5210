@@ -3,11 +3,14 @@ streamlit-aggrid
 streamlit_option_menu
 streamlit-feedback
 streamlit-tags
+streamlit-modal
+streamlit_javascript
 st-pages
 click
 np_utils
 matplotlib
 pandas
+pandasai
 keras
 tensorflow
 graphviz
@@ -38,6 +41,7 @@ langchain
 langchain-community
 langchain-core
 langchain-openai
+langchain_experimental
 tiktoken
 sentence-transformers
 tf-keras
@@ -60,3 +64,4 @@ opencv-python
 pikepdf
 pypdf
 nicegui
+pymupdf

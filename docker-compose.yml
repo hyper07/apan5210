@@ -17,22 +17,6 @@ services:
       ports:
           - 19501:19501
 
-  apan5210-jupyter:
-    container_name: apan5210-jupyter
-    build: 
-      context: .
-      dockerfile: ./docker/jupyter/Dockerfile
-    volumes:
-      - ./work:/home/jovyan
-      - ~/Documents:/home/jovyan/Documents
-      - ~/Downloads:/home/jovyan/Downloads
-    ports:
-      - 8877:8888
-      - 8878:5001
-    networks:
-      - apan5210-net
-    command: "start-notebook.sh --NotebookApp.token="
-
   apan5210-ollama:
       image: ollama/ollama:latest
       ports:

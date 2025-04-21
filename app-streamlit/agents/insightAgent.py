@@ -9,13 +9,13 @@ os.environ["DEEPSEEK_API_KEY"] = "sk-91eb1dbe41a34242a86cd3d4f4786fc9"
 API_KEY  = os.getenv("DEEPSEEK_API_KEY")
 BASE_URL = "https://api.deepseek.com"
 
-class InsightGenerator:
+class InsightAgent:
     """
     Result Critique Agent:
     Takes a block of analysis text and returns a structured critique,
     including strengths, weaknesses, improvement suggestions, and deeper insights.
     """
-    def __init__(self):
+    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.api_key  = os.getenv("DEEPSEEK_API_KEY")
         if not self.api_key:
             raise ValueError("Please set DEEPSEEK_API_KEY in your .env file")
