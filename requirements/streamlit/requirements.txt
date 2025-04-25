@@ -10,7 +10,6 @@ click
 np_utils
 matplotlib
 pandas
-pandasai
 keras
 tensorflow
 graphviz
