@@ -44,20 +44,30 @@ class ServiceController:
     
     def pullModelFromSite(self, model):
         try:
-            response = requests.post(self.api_url+"/api/pull", json={"model": model, "stream": False})  # Replace with the correct hostname or IP if different
-            return response.json()["status"]
+            response = requests.post(
+                f"{self.api_url}/api/pull", 
+                json={"model": model, "stream": False}
+            )
+            if response.status_code == 200:
+                return response.json().get("status", "Unknown status")
+            else:
+                error_message = response.json().get("message", "Unknown error")
+                st.error(f"Error pulling model '{model}': {error_message}")
+                return None
         except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching Ollama model list: {e}")
+            st.error(f"Request exception while pulling model '{model}': {e}")
             return None
-
 
     def getLLMlist(self):
         try:
-            response = requests.get(self.api_url+"/api/tags")  # Replace with the correct hostname or IP if different
+            response = requests.get(f"{self.api_url}/api/tags")
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            st.error(f"HTTP error while fetching model list: {e}")
+            return None
         except requests.exceptions.RequestException as e:
-            st.error(f"Error fetching Ollama model list: {e}")
+            st.error(f"Request exception while fetching model list: {e}")
             return None
 
     def getModelListOnly(self):
@@ -67,8 +77,9 @@ class ServiceController:
             for model in model_list.get("models", []):
                 models.append(model.get("name"))
             return models
-        
-        return None
+        else:
+            st.warning("Model list is empty or could not be fetched.")
+            return []
 
     def initialize_llms_session_state():
         if 'llms' not in st.session_state:

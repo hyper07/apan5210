@@ -19,14 +19,13 @@ from langchain_community.document_loaders import CSVLoader
 from langchain.embeddings import OllamaEmbeddings
 from streamlit_tags import st_tags, st_tags_sidebar
 
+
 import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 from streamlit_modal import Modal  # Ensure you have the correct package installed
 
 from contollers.serviceController import ServiceController
-from pandasai import SmartDataframe
-from pandasai.llm.local_llm import LocalLLM
 
 ServiceController.initialize_llms_session_state()
 
@@ -35,10 +34,6 @@ file_path = "/tmp/files"
 
 llm = Ollama(model="deepseek-r1:14b", base_url="http://host.docker.internal:39870", verbose=True)
 
-model = LocalLLM(
-    api_base="http://host.docker.internal:39870/v1",
-    model="deepseek-r1:14b"
-)
 
 sample_file_path = ''
 columns = []
@@ -109,15 +104,14 @@ if uploaded_file is not None:
 
         data = pd.read_csv(st.session_state["dataAnalysis"]["analyzer"]["file_path"])
         st.dataframe(data.head(5))
-        df = SmartDataframe(data,{"enable_cache": False},config={"llm": model})
         # st.write(df)
         prompt = st.text_area("What do you want to ask?")
 
         if st.button("Ask"):
             if prompt:
                 prompt = "This is the data variable descrition. "+ data.describe().to_string() +"." + prompt
-                with st.spinner("Generating Request..."):
-                    st.write(df.chat(prompt))
+                # with st.spinner("Generating Request..."):
+                    # st.write(df.chat(prompt))
 
     except UnicodeDecodeError:
         dialogBox()
@@ -147,6 +141,14 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
+agent=create_pandas_dataframe_agent(llm=OpenAI(temperature=0),df=df,max_execution_time=1600,max_iterations=1000,verbose=True,agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION)
+query=st.text_input("ask question to your csv")
+
+if st.button("Submit",type="primary"):
+    if query is not None:
+        response=agent.run(query)
+        st.write(response)
+
 if len(st.session_state.messages) > 0 and (st.session_state.messages[0]["role"] != "assistant" or st.session_state.messages[-1]["role"]) != "assistant":
     with st.chat_message("assistant"):
         with st.spinner("Analyzing ..."):
@@ -175,7 +177,7 @@ if len(st.session_state.messages) > 0 and (st.session_state.messages[0]["role"] 
             response=chain({"question":query})
             cleaned_result = re.sub(r'<think>.*?</think>', '', response['result'], flags=re.DOTALL)
             # cleaned_result = cleaned_result.replace("content includes", "")
-        
+            st.write(df.chat(prompt))
             message = {"role": "assistant", "content": cleaned_result}
             # st.write(response['result'])
             

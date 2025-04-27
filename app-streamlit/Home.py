@@ -5,7 +5,7 @@ import os
 from contollers.serviceController import ServiceController
 from contollers.agentController import AgentController
 # from urllib.parse import urlparse
-
+from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS
 
 st.set_page_config(layout="wide")
 
@@ -33,92 +33,29 @@ llms = ServiceController().getModelListOnly()
 st.session_state.llms = llms
 
 with st.status("Initializing models ...", expanded=True) as status:
-    common_elements = list(set(llms if llms is not None else []) & set(["qwen:1.8b", "qwen2.5-coder:3b", "deepseek-r1:1.5b", "phi3:latest", "gemma3:1b", "llama3.2:1b"]))    
+    common_elements = list(set(llms if llms is not None else []) & set(REQUIRED_MODELS))    
 
     if llms is None:
         st.error("Can't get models. Please check the API URL.")
-
-    elif len(common_elements) < 6:
-        # st.write("Initializing models. The time required depends on your internet speed ....")
-        remains = 6 - len(common_elements)
+    elif len(common_elements) < 7:
+        remains = 7 - len(common_elements)
         count = 1
-        if 'qwen:1.8b' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading qwen1.8b model for translater ...", expanded=False, state="running")
-            result = ServiceController().pullModelFromSite("qwen:1.8b")
-            count = count + 1
-        if 'qwen2.5-coder:3b' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading qwen2.5-coder:3b model for coder ...")
-            result = ServiceController().pullModelFromSite("qwen2.5-coder:3b")
-            count = count + 1
-        if 'deepseek-r1:1.5b' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading deepseek-r1:1.5b model for insight ...")
-            result = ServiceController().pullModelFromSite("deepseek-r1:1.5b")
-            count = count + 1
-        if 'phi3:latest' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading phi3:latest model for reporter ...")
-            result = ServiceController().pullModelFromSite("phi3:latest")
-            count = count + 1
-        if 'gemma3:1b' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading gemma3:1b model for analyzer ...")
-            result = ServiceController().pullModelFromSite("gemma3:1b")
-            count = count + 1
-        if 'llama3.2:1b' not in llms:
-            status.update(
-                label="("+str(count)+"/"+str(remains)+") Downloading llama3.2:1b model for review ...")
-            result = ServiceController().pullModelFromSite("llama3.2:1b")
-            count = count + 1
+        for model in REQUIRED_MODELS:
+            if model not in llms:
+                status.update(
+                    label=f"({count}/{remains}) Downloading {model} model ...", expanded=True, state="running"
+                )
+                result = ServiceController().pullModelFromSite(model)
+                count += 1
 
-        st.session_state.llms = ServiceController().getModelListOnly()
+        llms = ServiceController().getModelListOnly()
+        st.session_state.llms = llms
+        status.update(label="All models downloaded. Initialization complete.", expanded=True, state="complete")
+    else:
+        status.update(label="All models downloaded. Initialization complete.", expanded=True, state="complete")
 
 st.session_state.currentPage = "Home"
-st.session_state.dataAnalysis = {
-    "analyzer": {
-        "file_path": "",
-        "predict_variable" : "",
-        "variables_list" : [],
-        "ml_model" : "",
-        "message" : "",
-    },
-    "insight": {
-        "translation" : "en",
-        "message" : "",
-        "en" : "",
-        "cn" : "",
-        "kr" : "",
-    },
-    "reporter": {
-        "translation" : "en",
-        "message" : "",
-        "en" : "",
-        "cn" : "",
-        "kr" : "",
-    },
-    "reviewer": {
-        "translation" : "en",
-        "message" : "",
-        "en" : "",
-        "cn" : "",
-        "kr" : "",
-    },
-    "translator": {
-        "en" : "",
-        "cn" : "",
-        "kr" : "",
-    },
-    "coder":  {
-        "message" : "",
-        "code" : "",
-    },
-    "results": {
-        "message" : "",
-        "file_path" : "",
-    }
-}
+st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES
 
 if llms:
     st.write("### Available Models:")
@@ -127,7 +64,7 @@ if llms:
 else:
     st.write("No models available.")
 
-
+st.write(st.session_state.dataAnalysis)
 
 # st.session_state.llms = llms
 
