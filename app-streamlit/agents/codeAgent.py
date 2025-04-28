@@ -17,6 +17,34 @@ class CodeAgent:
             "Content-Type":  "application/json"
         }
 
+    def getModel(self):  
+
+        return self.llmModel
+    
+    def setModel(self, model):  
+
+        self.llmModel = model
+
+        return self
+    
+    def getUrl(self):  
+
+        return self.llmUrl
+    
+    def setUrl(self, url):
+        self.llmUrl = url
+
+        return self
+    
+    def getAPIKey(self):  
+
+        return self.apikey
+    
+    def setAPIKey(self, apikey):
+        self.apikey = apikey
+
+        return self
+    
     def generate(self, analysis: str) -> str:
         presetting ="You are an AI coding assistant. \
             You will receive recommended machine learning model(s) for a given dataset and analysis task. \

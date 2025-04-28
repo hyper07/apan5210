@@ -60,6 +60,8 @@ python-pptx
 pdf2image
 pdfminer
 opencv-python
+reportlab
+fpdf2
 
 pikepdf
 pypdf

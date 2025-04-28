@@ -29,17 +29,31 @@ class TranslateAgent:
         self.llmUrl = var2
 
     def getModel(self):  
+
         return self.llmModel
     
     def setModel(self, model):  
+
         self.llmModel = model
+
         return self
     
     def getUrl(self):  
+
         return self.llmUrl
     
     def setUrl(self, url):
         self.llmUrl = url
+
+        return self
+    
+    def getAPIKey(self):  
+
+        return self.apikey
+    
+    def setAPIKey(self, apikey):
+        self.apikey = apikey
+
         return self
     
     def sendPrompt(self, prompt):

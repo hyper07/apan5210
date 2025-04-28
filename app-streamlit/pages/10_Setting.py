@@ -5,15 +5,21 @@ import os
 from controllers.serviceController import ServiceController
 from controllers.agentController import AgentController
 # from urllib.parse import urlparse
-from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS
+from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS, SAMPLE_ANALYSYS_RESPONSES
 
 st.set_page_config(layout="wide")
 
 st.write("# Settings")
-
+st.session_state.currentPage = "Home"
 # Function to refresh model list
 def refresh_models():
     st.session_state.llms = ServiceController().getModelListOnly()
+
+def setAPIKey(api_type, api_key):
+    # if api_type is not None and api_type is not None:
+        st.session_state.dataAnalysis[api_type] = api_key
+
+st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES if st.session_state.dataAnalysis is None else st.session_state.dataAnalysis
 
 llms = ServiceController().getModelListOnly()
 st.session_state.llms = llms
@@ -41,10 +47,6 @@ with st.status("Initializing required models ...", expanded=True) as status:
         status.update(label="Required models downloaded. Initialization complete.", expanded=True, state="complete")
     else:
         status.update(label="All required models are available. Initialization complete.", expanded=True, state="complete")
-
-
-st.session_state.currentPage = "Home"
-st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES
 
 st.divider()
 
@@ -76,3 +78,15 @@ if llms:
 
 else:
     st.warning("No models available. Please check the API connection or download a model.")
+
+
+st.divider()
+openai_api_key = st.text_input("OPENAI API KEY")
+if st.button("Save OPENAI API Key"):
+    setAPIKey("openai_api_key", openai_api_key)
+    st.success("OPENAI API Key saved to session.")
+
+deepseek_api_key = st.text_input("DEEPSEEK API KEY")
+if st.button("Save DEEPSEEK API Key"):
+    setAPIKey("deepseek_api_key", deepseek_api_key)
+    st.success("DEEPSEEK API Key saved to session.")

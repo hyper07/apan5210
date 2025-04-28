@@ -43,17 +43,12 @@ class ReportAgent:
         self.llmUrl = url
         return self
     
-    def sendPrompt(self, prompt):
+    def excute(self, prompt):
         file_path = os.getcwd()
         llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
 
         sample_file_path = ''
         columns = []
-
-        def sendPrompt(prompt):
-            global llm
-            response = llm.invoke(prompt)
-            return response
 
 
         st.title("Download LLM Models")

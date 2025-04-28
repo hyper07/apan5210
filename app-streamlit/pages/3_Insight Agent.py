@@ -70,8 +70,11 @@ if (
             insight_response = ""
             for chunk in llm.stream(insight_llm_prompt):
                 insight_response += chunk
-            st.markdown(insight_response.strip())
 
+            translated_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["insight"]["message"] = translated_text
+            st.session_state.dataAnalysis["insight"]["en"] = translated_text
+            st.markdown(translated_text)
 
 
 

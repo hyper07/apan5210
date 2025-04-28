@@ -22,6 +22,7 @@ from agents.reportAgent import ReportAgent
 from agents.reviewAgent import ReviewAgent
 from agents.translateAgent import TranslateAgent
 import requests
+from fpdf import FPDF
 
 class ServiceController:
 
@@ -89,6 +90,21 @@ class ServiceController:
             """
             st.write(nav_script, unsafe_allow_html=True)
 
+    @staticmethod
+    def save_pdf(text, lang):
+        """Save the given text as a PDF in /tmp/files/pdf/report_{lang}.pdf."""
+        pdf_dir = '/tmp/files/pdf'
+        os.makedirs(pdf_dir, exist_ok=True)
+        pdf_filename = f"report_{lang.lower()}.pdf"
+        pdf_path = os.path.join(pdf_dir, pdf_filename)
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.set_font("Arial", size=12)
+        for line in text.split('\n'):
+            pdf.multi_cell(0, 10, line)
+        pdf.output(pdf_path)
+        return pdf_path
 
     def run_python_script(code: str):
         """Save code to /tmp/files/script/run.py and execute it, returning stdout and stderr."""
