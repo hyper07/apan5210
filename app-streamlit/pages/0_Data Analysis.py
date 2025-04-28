@@ -27,7 +27,7 @@ import plotly.figure_factory as ff
 import joblib
 import time
 import logging
-from contollers.serviceController import ServiceController
+from controllers.serviceController import ServiceController
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

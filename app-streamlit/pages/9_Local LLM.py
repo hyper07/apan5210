@@ -22,7 +22,7 @@ from streamlit_tags import st_tags, st_tags_sidebar
 import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
-from contollers.serviceController import ServiceController
+from controllers.serviceController import ServiceController
 
 
 ServiceController.initialize_llms_session_state()

@@ -78,6 +78,9 @@ if uploaded_file:
             options=[""] + columns,
             key="prediction_variable"
         )
+        st.session_state.dataAnalysis["analyzer"]["variables_list"] = [col for col in columns if col != prediction_variable]
+        st.session_state.dataAnalysis["analyzer"]["target_variable"] = prediction_variable
+
     except Exception as e:
         st.error(f"Error loading file: {str(e)}")
 else:
@@ -119,6 +122,7 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
 
                     try:
                         df = st.session_state.dataAnalysis["analyzer"]["df"]
+                      
 
                         while retry_count <= max_retries:
                             try:
@@ -170,26 +174,28 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
                         # Now safely parse the JSON
                         try:
                             parsed_analysis = json.loads(json_text)
+
+                            st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
+                            st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
                         except json.JSONDecodeError as e:
                             raise ValueError(f"JSON decoding failed: {str(e)}")
 
                         # Use parsed_analysis as your final output
                         # Display the parsed analysis in a more readable markdown format
-                        st.json(parsed_analysis)  # Display the JSON in a code block
-                        for model in parsed_analysis:
-                            model_name = model.get("ml_model", "Unknown Model")
-                            pros = model.get("pros", "No pros provided.")
-                            cons = model.get("cons", "No cons provided.")
-                            explanation = model.get("explanation", "No explanation provided.")
-
-                            st.markdown(f"### {model_name}")
-                            st.markdown(f"**Pros:** {pros}")
-                            st.markdown(f"**Cons:** {cons}")
-                            st.markdown(f"**Explanation:** {explanation}")
-                            st.markdown("---")  # Add a horizontal line for separation
-
-                        st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
-                        st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
-                                
+   
                     except Exception as e:
                         st.error(f"Analysis failed: {str(e)}")
+
+    if st.session_state.dataAnalysis["analyzer"]["models"]:
+        # st.json(st.session_state.dataAnalysis["analyzer"]["models"])  # Display the JSON in a code block
+        for model in st.session_state.dataAnalysis["analyzer"]["models"]:
+            model_name = model.get("ml_model", "Unknown Model")
+            pros = model.get("pros", "No pros provided.")
+            cons = model.get("cons", "No cons provided.")
+            explanation = model.get("explanation", "No explanation provided.")
+
+            st.markdown(f"### {model_name}")
+            st.markdown(f"**Pros:** {pros}")
+            st.markdown(f"**Cons:** {cons}")
+            st.markdown(f"**Explanation:** {explanation}")
+            st.markdown("---")  # Add a horizontal line for separation

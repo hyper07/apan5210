@@ -2,14 +2,19 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-from contollers.serviceController import ServiceController
-from contollers.agentController import AgentController
+import json
+from datetime import datetime
+from controllers.serviceController import ServiceController
+from controllers.agentController import AgentController
 # from urllib.parse import urlparse
-from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS
+from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS, SAMPLE_ANALYSYS_RESPONSES
 
 st.set_page_config(layout="wide")
-
 st.write("# HOME")
+
+st.session_state.currentPage = "Home"
+st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES if 'dataAnalysis' not in st.session_state else st.session_state.dataAnalysis
+
 # st.write("## This is a H2 Title!1")
 # x = st.text_input("Movie", "Star Wars")
 
@@ -54,13 +59,69 @@ with st.status("Initializing models ...", expanded=True) as status:
     else:
         status.update(label="All models downloaded. Initialization complete.", expanded=True, state="complete")
 
-st.session_state.currentPage = "Home"
-st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES
+# Define backup path and ensure it exists
+BACKUP_DIR = os.getenv("BACKUP_DIR", "")
+os.makedirs(BACKUP_DIR, exist_ok=True)
+
+# --- Button Section ---
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("Load Sample Data"):
+        st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES
+        st.success("Sample data loaded.")
+
+
+with col2:
+    if st.button("Backup Current Data"):
+        if "dataAnalysis" in st.session_state:
+            try:
+                def make_json_serializable(obj):
+                    if isinstance(obj, pd.DataFrame):
+                        return obj.to_dict(orient="records")
+                    elif isinstance(obj, dict):
+                        return {k: make_json_serializable(v) for k, v in obj.items()}
+                    elif isinstance(obj, list):
+                        return [make_json_serializable(i) for i in obj]
+                    else:
+                        return obj
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_filename = f"dataAnalysis_backup_{timestamp}.json"
+                backup_filepath = os.path.join(BACKUP_DIR, backup_filename)
+                serializable_data = make_json_serializable(st.session_state.dataAnalysis)
+                with open(backup_filepath, 'w') as f:
+                    json.dump(serializable_data, f, indent=4)
+                st.success(f"Data backed up to {backup_filepath}")
+            except Exception as e:
+                st.error(f"Error backing up data: {e}")
+        else:
+            st.warning("No data analysis state found to back up.")
+
+with col3:
+    if st.button("Load from Backup"):
+        try:
+            backup_files = [f for f in os.listdir(BACKUP_DIR) if f.startswith("dataAnalysis_backup_") and f.endswith(".json")]
+            if not backup_files:
+                st.warning("No backup files found.")
+            else:
+                # Find the latest backup file
+                latest_backup_file = max(backup_files, key=lambda f: os.path.getmtime(os.path.join(BACKUP_DIR, f)))
+                latest_backup_filepath = os.path.join(BACKUP_DIR, latest_backup_file)
+                
+                with open(latest_backup_filepath, 'r') as f:
+                    backup_data = json.load(f)
+                st.session_state.dataAnalysis = backup_data
+                st.success(f"Data loaded from {latest_backup_filepath}")
+        except Exception as e:
+            st.error(f"Error loading from backup: {e}")
+
 
 if llms:
-    st.write("### Available Models:")
-    for model in llms:
-        st.write(f"- {model}")
+    st.write("### Select a Model:")
+    st.selectbox("Available Models", llms, 
+                                  on_change=None)
+
 else:
     st.write("No models available.")
 

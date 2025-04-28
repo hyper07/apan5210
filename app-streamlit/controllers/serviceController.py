@@ -12,6 +12,7 @@ from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
 import numpy as np
 import pandas as pd
+import subprocess
 import os
 import time
 from agents.analyzerAgent import AnalyzerAgent
@@ -88,3 +89,22 @@ class ServiceController:
             """
             st.write(nav_script, unsafe_allow_html=True)
 
+
+    def run_python_script(code: str):
+        """Save code to /tmp/files/script/run.py and execute it, returning stdout and stderr."""
+        script_dir = "/tmp/files/script"
+        script_path = os.path.join(script_dir, "run.py")
+        os.makedirs(script_dir, exist_ok=True)
+        with open(script_path, "w") as f:
+            f.write(code)
+        try:
+            result = subprocess.run(
+                ["python", script_path],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                env={**os.environ, "PYTHONUNBUFFERED": "1"}  # Ensure real-time output
+            )
+            return result.stdout, result.stderr
+        except Exception as e:
+            return "", f"Execution failed: {e}"

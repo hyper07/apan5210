@@ -14,8 +14,8 @@ import numpy as np
 import pandas as pd
 import os
 import time
-from contollers.agentController import AgentController
-from contollers.serviceController import ServiceController
+from controllers.agentController import AgentController
+from controllers.serviceController import ServiceController
 
 
 ServiceController.initialize_llms_session_state()

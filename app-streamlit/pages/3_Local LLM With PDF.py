@@ -12,7 +12,7 @@ from langchain.memory import ConversationBufferMemory
 import streamlit as st
 import os
 import time
-from contollers.serviceController import ServiceController
+from controllers.serviceController import ServiceController
 
 ServiceController.initialize_llms_session_state()
 
