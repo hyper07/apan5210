@@ -43,32 +43,7 @@ class ReviewAgent:
         self.llmUrl = url
         return self
     
-    def sendPrompt(self, prompt):
-        
-    # Sze Ning 's edit
-    # MODIFY HERE: Treat 'prompt' as the full narrative text from Agents 1–5
-        file_path = os.getcwd()
-        llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
+    def invoke(self, prompt):
+        llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
 
-    # MODIFY HERE: Construct a review prompt that references outputs from Agents 1–5
-        review_prompt = (
-            "You are Agent 6, the Reviewer. You receive the complete pipeline outputs from Agents 1–5: "
-            "the data summary, model selection rationale, execution results, insights, and translated text. "
-            "Polish and refine the following narrative for clarity, logical flow, and professional tone. "
-            "Ensure consistent terminology, add smooth transitions between sections, and label sections appropriately.\n\n"
-            + prompt
-        )
-        response = llm.invoke(review_prompt)
-        polished_narrative = response.strip()
-
-  # MODIFY HERE: Display only the refined narrative in the Streamlit UI
-        st.title("Agent 6: Narrative Reviewer")
-        st.subheader("Refined Narrative Output")
-        st.write(polished_narrative)
-
-        # MODIFY HERE: End of Agent 6 scope – downstream PDF builder will use this polished text
-
-# End of Reviewer class
-
-        
         

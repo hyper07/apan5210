@@ -1,55 +1,36 @@
 import streamlit as st 
 import os
 import base64
-import time
+import torch 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM 
 from transformers import pipeline
-import torch 
-import textwrap 
-from langchain.document_loaders import PyPDFLoader, DirectoryLoader, PDFMinerLoader 
+from langchain_community.llms import Ollama
+from langchain.document_loaders import PDFMinerLoader 
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 from langchain.embeddings import SentenceTransformerEmbeddings 
 from langchain.vectorstores import Chroma 
 from langchain.llms import HuggingFacePipeline
 from langchain.chains import RetrievalQA 
-from constants import CHROMA_SETTINGS
 from streamlit_chat import message
 
 from utils.constants import CHROMA_SETTINGS
 
 persist_directory = "db"
 
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="ML Model Advisor", layout="wide")
+st.title("Review Agent")
+
+llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
 
 device = torch.device('cpu')
 
 checkpoint = "MBZUAI/LaMini-T5-738M"
-print(f"Checkpoint path: {checkpoint}")  # Add this line for debugging
+# print(f"Checkpoint path: {checkpoint}")  # Add this line for debugging
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 base_model = AutoModelForSeq2SeqLM.from_pretrained(
     checkpoint,
-    device_map=device,
     torch_dtype=torch.float32
 )
-
-persist_directory = "db"
-
-@st.cache_resource
-def data_ingestion():
-    for root, dirs, files in os.walk("docs"):
-        for file in files:
-            if file.endswith(".pdf"):
-                print(file)
-                loader = PDFMinerLoader(os.path.join(root, file))
-    documents = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=500)
-    texts = text_splitter.split_documents(documents)
-    #create embeddings here
-    embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    #create vector store here
-    db = Chroma.from_documents(texts, embeddings, persist_directory=persist_directory, client_settings=CHROMA_SETTINGS)
-    db.persist()
-    db=None 
 
 @st.cache_resource
 def llm_pipeline():
@@ -81,8 +62,6 @@ def qa_llm():
     return qa
 
 def process_answer(instruction):
-    response = ''
-    instruction = instruction
     qa = qa_llm()
     generated_text = qa(instruction)
     answer = generated_text['result']
@@ -95,79 +74,41 @@ def get_file_size(file):
     return file_size
 
 @st.cache_data
-#function to display the PDF of a given file 
 def displayPDF(file):
-    # Opening file from file path
     with open(file, "rb") as f:
         base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-
-    # Embedding PDF in HTML
     pdf_display = F'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-
-    # Displaying File
     st.markdown(pdf_display, unsafe_allow_html=True)
 
-# Display conversation history using Streamlit messages
 def display_conversation(history):
     for i in range(len(history["generated"])):
         message(history["past"][i], is_user=True, key=str(i) + "_user")
         message(history["generated"][i],key=str(i))
 
-def main():
-    st.markdown("<h1 style='text-align: center; color: blue;'>Chat with your PDF 🦜📄 </h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align: center; color: grey;'>Built by <a href='https://github.com/AIAnytime'>AI Anytime with ❤️ </a></h3>", unsafe_allow_html=True)
+def review_report_with_llm(pdf_path):
+    # You only need to load the PDF and concatenate its text for the LLM prompt.
+    loader = PDFMinerLoader(pdf_path)
+    documents = loader.load()
+    # If the PDF is not too large, you can skip splitting and just join all page contents.
+    full_text = " ".join([doc.page_content for doc in documents])
+    review_prompt = (
+        "Please review the following report and provide feedback on its clarity, completeness, and overall quality:\n\n"
+        + full_text[:4000]  # Truncate if needed for context length
+    )
+    review = llm(review_prompt)
+    if isinstance(review, list):
+        return review[0]['generated_text']
+    elif isinstance(review, dict) and 'generated_text' in review:
+        return review['generated_text']
+    else:
+        return str(review)
 
-    st.markdown("<h2 style='text-align: center; color:red;'>Upload your PDF 👇</h2>", unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader("", type=["pdf"])
-
-    if uploaded_file is not None:
-        file_details = {
-            "Filename": uploaded_file.name,
-            "File size": get_file_size(uploaded_file)
-        }
-        filepath = "docs/"+uploaded_file.name
-        with open(filepath, "wb") as temp_file:
-                temp_file.write(uploaded_file.read())
-
-        col1, col2= st.columns([1,2])
-        with col1:
-            st.markdown("<h4 style color:black;'>File details</h4>", unsafe_allow_html=True)
-            st.json(file_details)
-            st.markdown("<h4 style color:black;'>File preview</h4>", unsafe_allow_html=True)
-            pdf_view = displayPDF(filepath)
-
-        with col2:
-            with st.spinner('Embeddings are in process...'):
-                ingested_data = data_ingestion()
-            st.success('Embeddings are created successfully!')
-            st.markdown("<h4 style color:black;'>Chat Here</h4>", unsafe_allow_html=True)
-
-
-            user_input = st.text_input("", key="input")
-
-            # Initialize session state for generated responses and past messages
-            if "generated" not in st.session_state:
-                st.session_state["generated"] = ["I am ready to help you"]
-            if "past" not in st.session_state:
-                st.session_state["past"] = ["Hey there!"]
-                
-            # Search the database for a response based on user input and update session state
-            if user_input:
-                answer = process_answer({'query': user_input})
-                st.session_state["past"].append(user_input)
-                response = answer
-                st.session_state["generated"].append(response)
-
-            # Display conversation history using Streamlit messages
-            if st.session_state["generated"]:
-                display_conversation(st.session_state)
-        
-
-        
-
-
-
-
-if __name__ == "__main__":
-    main()
+if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAnalysis:
+    report_path = st.session_state.dataAnalysis["reporter"].get("file_path")
+    if report_path and os.path.exists(report_path):
+        if st.button("Review Report with LLM"):
+            with st.spinner("Reviewing report..."):
+                review_result = review_report_with_llm(report_path)
+            st.success("Review completed!")
+            st.markdown("#### LLM Review Output:")
+            st.write(review_result)

@@ -1,7 +1,6 @@
 #imports
 import streamlit as st
 import os
-from pathlib import Path
 import numpy as np
 import pandas as pd
 import random
@@ -973,7 +972,8 @@ def show_data_viz_page():
         """)
         st.divider()
         # 2nd chart: Age discretization
-        df['age_cat'] = pd.cut(df.age, bins=[18,29,40,50,60,96], labels=['18-29','30-40','40-50','50-60','60+'])
+        df['age_cat'] = pd.cut(df.age, bins=[18,29,40,50,60,96], labels=['18-29','30-40','40-50','50-60','Over 60 years'],
+                right=False)
         df['age_cat'].value_counts()
 
         # 1ST CHART AGE
@@ -1545,7 +1545,7 @@ def show_data_viz_page():
         st.markdown("""
         - **Previous contacts**: A high proportion of customers have not been contacted previously.
         However, it is interesting to note that customers who have already been contacted before this campaign (during a previous campaign)
-        are more likely to subscribe to the deposit: 67% of customers previously contacted subscribed to the deposit during this campaign, and conversely, those who have not been contacted previously were nearly 60% not to subscribe to the deposit during this campaign.
+        are more likely to subscribe to the deposit: 67% of customers previously contacted subscribed to the deposit during this campaign, and conversely, those who have not been contacted previously were nearly 60% not to subscribe to thedeposit during this campaign.
         This indicates that the multiplication of contacts on different campaigns can encourage customers and influence the success of a following campaign.
         - **Number of days since the last contact**: We can see that less time has passed since the last contact for customers subscribing to the deposit on this campaign.
         With a narrower range (between 94 and 246 days) than those who have not subscribed to the deposit (range 148 to 332 days).
@@ -1831,6 +1831,10 @@ def show_modelling_page():
             st.dataframe(X_train_processed_df.head())
             st.write("**X_test_processed without duration:**")
             st.dataframe(X_test_processed_df.head())
+            st.write("**y_train_processed after pipeline:**")
+            st.dataframe(y_train_processed_df.head())
+            st.write("**y_test_processed after pipeline:**")
+            st.dataframe(y_test_processed_df.head())
        
 
         st.divider()     

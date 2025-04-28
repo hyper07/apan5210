@@ -1,25 +1,33 @@
+
+from pathlib import Path
 import os
-import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+from langchain_community.llms import Ollama
+from langchain_community.llms import LlamaCpp
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.document_loaders import UnstructuredExcelLoader
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chat_models import ChatOpenAI
+from langchain.indexes import VectorstoreIndexCreator
+from langchain.chains import RetrievalQA
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
-os.environ["DEEPSEEK_API_KEY"] = "sk-91eb1dbe41a34242a86cd3d4f4786fc9"
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain_community.document_loaders import CSVLoader
+from langchain.embeddings import OllamaEmbeddings
+from streamlit_tags import st_tags, st_tags_sidebar
 
-API_KEY  = os.getenv("DEEPSEEK_API_KEY")
-BASE_URL = "https://api.deepseek.com"
+import streamlit as st
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+import pandas as pd
 
 class InsightAgent:
 
     def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
-        self.api_key  = os.getenv("DEEPSEEK_API_KEY")
-        if not self.api_key:
-            raise ValueError("Please set DEEPSEEK_API_KEY in your .env file")
-        self.endpoint = "https://api.deepseek.com/chat/completions"
-        self.headers  = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type":  "application/json"
-        }
+        self.llmModel = var1
+        self.llmUrl = var2
 
     def getModel(self):  
 
@@ -50,35 +58,4 @@ class InsightAgent:
         return self
     
     def critique(self, analysis: str) -> str:
-        """
-        Send the analysis text to DeepSeek and return a point-by-point critique:
-        1. Main strengths
-        2. Weaknesses or potential risks
-        3. Suggestions for improvement
-        4. Deeper insights or trends reflected
-        """
-
-        ## by shuteng
-        prompt = (
-            "Below is the result of a Python analysis:\n"
-            f"{analysis}\n\n"
-            "Please provide a professional critique including:\n"
-            "1. What are the main strengths of these results?\n"
-            "2. What weaknesses or potential risks exist?\n"
-            "3. Are there areas for improvement? How would you improve?\n"
-            "4. What deeper insights or trends do these results reflect?\n\n"
-            "Respond in clear bullet points."
-        )
-
-        payload = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "You are a data analysis expert skilled in critiquing results."},
-                {"role": "user",   "content": prompt}
-            ],
-            "temperature": 0.0
-        }
-
-        response = requests.post(self.endpoint, json=payload, headers=self.headers)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+        llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)

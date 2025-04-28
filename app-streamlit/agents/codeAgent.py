@@ -1,21 +1,34 @@
+
+from pathlib import Path
 import os
-import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+from langchain_community.llms import Ollama
+from langchain_community.llms import LlamaCpp
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.document_loaders import UnstructuredExcelLoader
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chat_models import ChatOpenAI
+from langchain.indexes import VectorstoreIndexCreator
+from langchain.chains import RetrievalQA
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
-########
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain_community.document_loaders import CSVLoader
+from langchain.embeddings import OllamaEmbeddings
+from streamlit_tags import st_tags, st_tags_sidebar
+
+import streamlit as st
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+import pandas as pd
+
+
 ## presetting by Jing
 class CodeAgent:
     def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
-        self.api_key  = os.getenv("DEEPSEEK_API_KEY")
-        if not self.api_key:
-            raise ValueError("Please set DEEPSEEK_API_KEY in your .env file")
-        self.endpoint = "https://api.deepseek.com/chat/completions"
-        self.headers  = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type":  "application/json"
-        }
+        self.llmModel = var1
+        self.llmUrl = var2
 
     def getModel(self):  
 

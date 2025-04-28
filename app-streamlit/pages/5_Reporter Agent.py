@@ -136,7 +136,22 @@ col_pdf1, col_pdf2 = st.columns([1, 1])
 with col_pdf1:
     if st.button("Save as PDF"):
         if report_text:
-            ServiceController.save_pdf(report_text, lang)
+            # Pass all relevant context to save_pdf
+            result = ServiceController.save_pdf(
+                st.session_state.dataAnalysis["reporter"].get("kr", "") if lang == "Korean" else st.session_state.dataAnalysis["reporter"].get("cn", "") if lang == "Chinese" else st.session_state.dataAnalysis["reporter"].get("en", ""),
+                lang,
+                selected_model=selected_model,
+                target_variable=target_variable,
+                feature_variables=feature_variables,
+                code=code,
+                code_result=code_result,
+                insight=insight
+            )
+            if result:
+                st.session_state.dataAnalysis["reporter"]["file_path"] = result
+                st.success(f"PDF saved to {pdf_path}")
+            else:
+                st.error("Failed to save PDF.")
             st.success(f"PDF saved to {pdf_path}")
         else:
             st.warning("No report to save for the selected language.")

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_community.llms import Ollama
-from streamlit_tags import st_tags, st_tags_sidebar
+from streamlit_tags import st_tags
 from utils.constants import DATA_ANALYSYS_RESPONSES
 import json
 import re
