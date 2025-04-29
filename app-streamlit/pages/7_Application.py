@@ -66,24 +66,14 @@ if 'prompt' not in st.session_state:
 
 # Initialize memory as a session state
 if 'memory' not in st.session_state:
-
     # Set value of memory key to ConversationBufferMemory from langchain.memory
     st.session_state.memory = ConversationBufferMemory(
-
         # Set params from input variables list
         memory_key="history",
         return_messages=True,
         input_key="question")
     
 
-# Initialize vectorstore
-# if 'vectorstore' not in st.session_state:
-
-    # Set value of vectorstore key to Chroma 
-    # st.session_state.vectorstore = Chroma(persist_directory='db',
-    #                                       embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:39870',
-    #                                                                           model="deepseek-r1:1.5b")
-    #                                       )
 if 'llm' not in st.session_state:
     st.session_state.llm = Ollama(base_url="http://host.docker.internal:39870",
                                   model="deepseek-r1:1.5b",
@@ -110,10 +100,10 @@ for message in st.session_state.chat_history:
         st.markdown(message["message"])
 
 if uploaded_file is not None:
-    if not os.path.isfile("files/"+uploaded_file.name+".pdf"):
-        with st.status("Analyzing your document..."):
+    if not os.path.isfile("files/"+uploaded_file.name+".csv"):
+        with st.status("Loading csv to dataframe..."):
             bytes_data = uploaded_file.read()
-            f = open("files/"+uploaded_file.name+".pdf", "wb")
+            f = open("files/"+uploaded_file.name, "wb")
             f.write(bytes_data)
             f.close()
             loader = PyPDFLoader("files/"+uploaded_file.name+".pdf")
@@ -196,18 +186,15 @@ st.header('Overview')
 
 
 #TABS CONTAINERS:
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Analyzer", "Code", "Statistics", "Report", "Review"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Analyzer", "Code", "Insight", "Report", "Review"])
 with tab1:
     st.code('df.head(10)')
     st.markdown("Overview of the first 10 lines")
-    st.dataframe(data_summary["head"])
 with tab2:
     st.markdown("The dimensions of the dataset: 17 variables and 11,162 rows.")
     st.code('df.shape')
-    st.write(data_summary["shape"])
 with tab3:
     st.code('df.describe()')
-    st.write(data_summary["description"])
     st.subheader("Observation")
     st.markdown("""
     - age: 50% of the values ​​are between 32 and 49 years old. Many extreme values: max 95.
@@ -220,8 +207,6 @@ with tab3:
 with tab4:
     st.markdown("Data types: ")
     st.code('df.dtypes')
-    st.write(data_summary["dtypes"])
 with tab5:
     st.markdown("No missing values: ")
     st.code('df.isna().sum()')
-    st.write(data_summary["missing_values"])

@@ -1,25 +1,8 @@
 
 from pathlib import Path
 import os
-
 from langchain_community.llms import Ollama
-from langchain_community.llms import LlamaCpp
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.document_loaders import UnstructuredExcelLoader
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.indexes import VectorstoreIndexCreator
-from langchain.chains import RetrievalQA
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain_community.document_loaders import CSVLoader
-from langchain.embeddings import OllamaEmbeddings
-from streamlit_tags import st_tags, st_tags_sidebar
-
-import pandas as pd
 
 class TranslateAgent:
     def __init__(self, var1=os.getenv("DEFAULT_TRANSLATER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
@@ -58,10 +41,22 @@ class TranslateAgent:
 
         return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
 
-    def invoke(self, prompt):
-        llm = self.getAgent()
-        return llm.invoke(prompt)
+    def invoke(self, language, prompt):
+        llm = self.get_llm()
 
-    def stream(self, prompt):
-        llm = self.getAgent()
-        return llm.stream(prompt)
+        translate_prompt = (
+            f"Translate the following text to {language}:\n\n"
+            f"{prompt}"
+        )
+        
+        return llm.invoke(translate_prompt)
+
+    def stream(self, language, prompt):
+        llm = self.get_llm()
+
+        translate_prompt = (
+            f"Translate the following text to {language}:\n\n"
+            f"{prompt}"
+        )
+
+        return llm.stream(translate_prompt)

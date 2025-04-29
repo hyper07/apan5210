@@ -19,7 +19,7 @@ if "coder" not in st.session_state.dataAnalysis:
     st.session_state.dataAnalysis["coder"] = {"message": {}, "code": ""}
 
 # Replace chat_input with text_area for user input
-prompt = st.text_area("Please enter the text to translate about your data or model selection")
+prompt = st.text_area("Please enter the text to translate")
 # Add translation buttons
 col1, col2 = st.columns(2)
 translate_to_chinese = col1.button("Translate to Chinese")
@@ -30,13 +30,9 @@ if prompt and (translate_to_chinese or translate_to_korean):
     with st.chat_message("assistant"):
         with st.spinner("Translating..."):
             target_language = "Chinese" if translate_to_chinese else "Korean"
-            translate_prompt = (
-                f"Translate the following text to {target_language}. "
-                f"{prompt}"
-            )
 
             agent = AgentController.getTranslateAgent()
-            response = agent.stream(translate_prompt)
+            response = agent.stream(target_language, prompt)
             translated_text = ""
             for chunk in response:
                 translated_text += chunk

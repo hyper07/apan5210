@@ -15,6 +15,8 @@ from streamlit_chat import message
 from utils.constants import DATA_ANALYSYS_RESPONSES
 from utils.constants import CHROMA_SETTINGS
 
+from agents.reviewAgent import ReviewAgent  # <-- Add this import
+
 persist_directory = "db"
 
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
@@ -22,7 +24,8 @@ st.title("Review Agent")
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
     st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
-llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
+review_agent = ReviewAgent(var1="llama3.2:1b", var2="http://host.docker.internal:39870")  # <-- Instantiate ReviewAgent
+llm = review_agent.get_llm()  # <-- Use ReviewAgent to get the LLM
 
 device = torch.device('cpu')
 

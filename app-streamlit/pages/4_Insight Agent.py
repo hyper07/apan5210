@@ -12,7 +12,7 @@ st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Insight Agent")
 
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
-    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
 # Save the code to a temporary file
 # Run the extracted code and display output/errors
@@ -64,10 +64,42 @@ if (
             for chunk in insight_llm:
                 insight_response += chunk
 
-            translated_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()
-            st.session_state.dataAnalysis["insight"]["message"] = translated_text
-            st.session_state.dataAnalysis["insight"]["en"] = translated_text
-            st.markdown(translated_text)
+            response_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["insight"]["message"] = response_text
+            st.session_state.dataAnalysis["insight"]["en"] = response_text
+
+# --- Language selection and translation ---
+if "message" in st.session_state.dataAnalysis["insight"] and st.session_state.dataAnalysis["insight"]["message"]:
+    lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True)
+    
+    translater = AgentController.getTranslateAgent()
+
+    # Automatic translation when language is changed and translation is empty
+    if lang == "Chinese" and st.session_state.dataAnalysis["insight"].get("message"):
+        with st.spinner("Translating to Chinese..."):
+
+            translated_text = ""
+            for chunk in translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")):
+                translated_text += chunk
+            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["insight"]["cn"] = translated_text
+
+    if lang == "Korean" and st.session_state.dataAnalysis["insight"].get("message"):
+        with st.spinner("Translating to Korean..."):
+
+            translated_text = ""
+            for chunk in translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")):
+                translated_text += chunk
+            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["insight"]["kr"] = translated_text
+
+    # Display the insight in the selected language
+    if lang == "English" and st.session_state.dataAnalysis["insight"].get("en"):
+        st.markdown(st.session_state.dataAnalysis["insight"]["en"])
+    elif lang == "Chinese" and st.session_state.dataAnalysis["insight"].get("cn"):
+        st.markdown(st.session_state.dataAnalysis["insight"]["cn"])
+    elif lang == "Korean" and st.session_state.dataAnalysis["insight"].get("kr"):
+        st.markdown(st.session_state.dataAnalysis["insight"]["kr"])
 
 
 

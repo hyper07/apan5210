@@ -97,19 +97,9 @@ with col3:
 
 
 if llms:
-    st.write("### Select a Model:")
-    st.selectbox("Available Models", llms, 
-                                  on_change=None)
-
+    st.write("### Available Models:")
+    st.selectbox("", llms, on_change=None)
 else:
     st.write("No models available.")
 
 st.write(st.session_state.dataAnalysis)
-
-# st.session_state.llms = llms
-
-# api_rul = AgentController().getAPIUrl()
-# analyzer = AgentController().getAnalyzerAgent()
-
-# st.write(api_rul)
-# st.write(analyzer.getUrl())

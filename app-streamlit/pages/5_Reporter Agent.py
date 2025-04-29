@@ -8,12 +8,13 @@ import os
 import io
 from fpdf import FPDF
 from controllers.serviceController import ServiceController
+from controllers.agentController import AgentController
 
 # Streamlit configuration
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Reporter Agent")
 
-llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", verbose=True)
+pdf_dir = os.getenv("DEFAULT_PDF_PATH", "/tmp/files/pdf/")
 
 # Ensure session state is initialized
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
@@ -45,97 +46,94 @@ if generate_report:
         f"Insight:\n{insight}\n"
         f"Please provide a detailed, human-readable report summarizing the analysis, results, and any recommendations."
     )
+
+    agent = AgentController.getReportAgent()
+
     report_response = ""
-    for chunk in llm.stream(report_prompt):
+    for chunk in agent.stream(report_prompt):
         report_response += chunk
     result_text = re.sub(r"<think>.*?</think>", "", report_response, flags=re.DOTALL).strip()
     st.session_state.dataAnalysis["reporter"]["message"] = result_text
     st.session_state.dataAnalysis["reporter"]["en"] = result_text
 
-# Language selection
-lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True)
 
-# Automatic translation when language is changed and translation is empty
-if lang == "Chinese" and not st.session_state.dataAnalysis["reporter"].get("cn") and st.session_state.dataAnalysis["reporter"].get("en"):
-    with st.spinner("Translating to Chinese..."):
-        translate_prompt = (
-            f"Translate the following text to Chinese:\n\n"
-            f"{st.session_state.dataAnalysis['reporter']['en']}"
-        )
-        translated_text = ""
-        for chunk in llm.stream(translate_prompt):
-            translated_text += chunk
-        translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-        st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
+if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dataAnalysis["reporter"]["message"] != "":
+    # Language selection
 
-if lang == "Korean" and not st.session_state.dataAnalysis["reporter"].get("kr") and st.session_state.dataAnalysis["reporter"].get("en"):
-    with st.spinner("Translating to Korean..."):
-        translate_prompt = (
-            f"Translate the following text to Korean:\n\n"
-            f"{st.session_state.dataAnalysis['reporter']['en']}"
-        )
-        translated_text = ""
-        for chunk in llm.stream(translate_prompt):
-            translated_text += chunk
-        translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-        st.session_state.dataAnalysis["reporter"]["kr"] = translated_text
+    lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True)
+    translater = AgentController.getTranslateAgent()
+    if lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("message"):
+        with st.spinner("Translating to Chinese..."):
+            translated_text = ""
+            st.markdown(st.session_state.dataAnalysis['reporter']['en'])
+            for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+                translated_text += chunk
+            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
 
-# Display the report in the selected language
-if lang == "English" and st.session_state.dataAnalysis["reporter"]["en"]:
-    st.markdown(st.session_state.dataAnalysis["reporter"]["en"])
-elif lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("cn"):
-    st.markdown(st.session_state.dataAnalysis["reporter"]["cn"])
-elif lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("kr"):
-    st.markdown(st.session_state.dataAnalysis["reporter"]["kr"])
+    if lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("message"):
+        with st.spinner("Translating to Korean..."):
+            translated_text = ""
+            for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+                translated_text += chunk
+            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+            st.session_state.dataAnalysis["reporter"]["kr"] = translated_text
 
-# --- PDF Export and Download Section ---
-pdf_dir = '/tmp/files/pdf'
-os.makedirs(pdf_dir, exist_ok=True)
-pdf_filename = f"report_{lang.lower()}.pdf"
-pdf_path = os.path.join(pdf_dir, pdf_filename)
+    # Display the report in the selected language
+    if lang == "English" and st.session_state.dataAnalysis["reporter"]["en"]:
+        st.markdown(st.session_state.dataAnalysis["reporter"]["en"])
+    elif lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("cn"):
+        st.markdown(st.session_state.dataAnalysis["reporter"]["cn"])
+    elif lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("kr"):
+        st.markdown(st.session_state.dataAnalysis["reporter"]["kr"])
 
-# Get the report text for the selected language
-report_text = ""
-if lang == "English":
-    report_text = st.session_state.dataAnalysis["reporter"].get("en", "")
-elif lang == "Chinese":
-    report_text = st.session_state.dataAnalysis["reporter"].get("cn", "")
-elif lang == "Korean":
-    report_text = st.session_state.dataAnalysis["reporter"].get("kr", "")
+    # --- PDF Export and Download Section ---
 
-col_pdf1, col_pdf2 = st.columns([1, 1])
-with col_pdf1:
-    if st.button("Save as PDF"):
-        if report_text:
-            # Pass all relevant context to save_pdf
-            result = ServiceController.save_pdf(
-                st.session_state.dataAnalysis["reporter"].get("kr", "") if lang == "Korean" else st.session_state.dataAnalysis["reporter"].get("cn", "") if lang == "Chinese" else st.session_state.dataAnalysis["reporter"].get("en", ""),
-                lang,
-                selected_model=selected_model,
-                target_variable=target_variable,
-                feature_variables=feature_variables,
-                code=code,
-                code_result=code_result,
-                insight=insight
-            )
-            if result:
-                st.session_state.dataAnalysis["reporter"]["file_path"] = result
-                st.success(f"PDF saved to {pdf_path}")
+    os.makedirs(pdf_dir, exist_ok=True)
+    pdf_filename = f"report_{lang.lower()}.pdf"
+    pdf_path = f"{pdf_dir}/{pdf_filename}"
+
+    # Get the report text for the selected language
+    report_text = ""
+    if lang == "English":
+        report_text = st.session_state.dataAnalysis["reporter"].get("en", "")
+    elif lang == "Chinese":
+        report_text = st.session_state.dataAnalysis["reporter"].get("cn", "")
+    elif lang == "Korean":
+        report_text = st.session_state.dataAnalysis["reporter"].get("kr", "")
+
+    col_pdf1, col_pdf2 = st.columns([1, 1])
+    with col_pdf1:
+        if st.button("Save as PDF"):
+            if report_text:
+                # Pass all relevant context to save_pdf
+                result = ServiceController.save_pdf(
+                    st.session_state.dataAnalysis["reporter"].get("kr", "") if lang == "Korean" else st.session_state.dataAnalysis["reporter"].get("cn", "") if lang == "Chinese" else st.session_state.dataAnalysis["reporter"].get("en", ""),
+                    lang,
+                    selected_model=selected_model,
+                    target_variable=target_variable,
+                    feature_variables=feature_variables,
+                    code=code,
+                    code_result=code_result,
+                    insight=insight
+                )
+                if result:
+                    st.session_state.dataAnalysis["reporter"]["file_path"] = result
+                    st.success(f"PDF saved to {pdf_path}")
+                else:
+                    st.error("Failed to save PDF.")
             else:
-                st.error("Failed to save PDF.")
-            st.success(f"PDF saved to {pdf_path}")
-        else:
-            st.warning("No report to save for the selected language.")
+                st.warning("No report to save for the selected language.")
 
-with col_pdf2:
-    if os.path.exists(pdf_path):
-        with open(pdf_path, "rb") as f:
-            st.download_button(
-                label="Download PDF",
-                data=f,
-                file_name=pdf_filename,
-                mime="application/pdf"
-            )
+    with col_pdf2:
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                st.download_button(
+                    label="Download PDF",
+                    data=f,
+                    file_name=pdf_filename,
+                    mime="application/pdf"
+                )
 
 
 

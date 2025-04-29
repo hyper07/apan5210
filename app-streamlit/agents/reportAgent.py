@@ -47,6 +47,13 @@ class ReportAgent:
 
         return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
     
-    def excute(self, prompt):
-        llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+    def stream(self, prompt):
+
+        llm = self.get_llm()
+        return llm.stream(prompt)
+    
+    def invoke(self, prompt):
+
+        llm = self.get_llm()
+        return llm.invoke(prompt)
 
