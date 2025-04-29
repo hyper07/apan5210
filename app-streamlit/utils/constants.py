@@ -5,13 +5,13 @@ from chromadb.config import Settings
 BACKUP_DIR = "/tmp/files/backup/"
 
 DEFAULT_API_URL="http://host.docker.internal:39870"
-DEFAULT_LLM_MODEL="qwen:1.8b"
+DEFAULT_LLM_MODEL="deepseek-r1:1.5b"
 
-DEFAULT_ANALYZER_LLM_MODEL="gemma3:1b"
+DEFAULT_ANALYZER_LLM_MODEL="deepseek-r1:1.5b"
 DEFAULT_CODER_LLM_MODEL="qwen2.5-coder:3b"
-DEFAULT_INSIGHT_LLM_MODEL="deepseek-r1:1.5b"
-DEFAULT_REPORT_LLM_MODEL="phi3:latest"
-DEFAULT_REVIEWER_LLM_MODEL="llama3.2:1b"
+DEFAULT_INSIGHT_LLM_MODEL="phi3:latest"
+DEFAULT_REPORT_LLM_MODEL="llama3.2:1b"
+DEFAULT_REVIEWER_LLM_MODEL="gemma3:1b"
 DEFAULT_TRANSLATER_LLM_MODEL="qwen:1.8b"
 
 DEFAULT_FILE_PATH='/tmp/files/'

@@ -19,12 +19,10 @@ from langchain_community.document_loaders import CSVLoader
 from langchain.embeddings import OllamaEmbeddings
 from streamlit_tags import st_tags, st_tags_sidebar
 
-import streamlit as st
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
 class TranslateAgent:
-    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
+    def __init__(self, var1=os.getenv("DEFAULT_TRANSLATER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 
@@ -56,6 +54,15 @@ class TranslateAgent:
 
         return self
     
-    def invoke(self, prompt):
-        llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+    def getAgent(self):
 
+        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+    
+
+    def invoke(self, prompt):
+        llm = self.getAgent()
+        return llm.invoke(prompt)
+
+    def stream(self, prompt):
+        llm = self.getAgent()
+        return llm.stream(prompt)

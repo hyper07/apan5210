@@ -25,7 +25,7 @@ import pandas as pd
 
 
 class ReviewAgent:
-    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
+    def __init__(self, var1=os.getenv("DEFAULT_REVIEWER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 

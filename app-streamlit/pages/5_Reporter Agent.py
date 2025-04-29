@@ -33,9 +33,9 @@ col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
     generate_report = st.button("Generate Report")
 with col2:
-    translate_to_chinese = st.button("Translate to Chinese")
+    translate_to_chinese = st.button("Chinese")
 with col3:
-    translate_to_korean = st.button("Translate to Korean")
+    translate_to_korean = st.button("Korean")
 
 if generate_report:
     # Construct the prompt for the LLM

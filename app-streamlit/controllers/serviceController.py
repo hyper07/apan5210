@@ -202,3 +202,12 @@ class ServiceController:
             return result.stdout, result.stderr
         except Exception as e:
             return "", f"Execution failed: {e}"
+
+    @staticmethod
+    def get_analyzer_agent(df):
+        agent = AnalyzerAgent()
+        return agent.create_agent(df)
+
+    @staticmethod
+    def get_analyzer_response(agent, df, prediction_variable, prompt):
+        return AnalyzerAgent().analyze_data(agent, df, prediction_variable, prompt)

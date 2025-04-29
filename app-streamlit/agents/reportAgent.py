@@ -25,7 +25,7 @@ import pandas as pd
 
 class ReportAgent:
 
-    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
+    def __init__(self, var1=os.getenv("DEFAULT_REPORT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
 
@@ -42,6 +42,10 @@ class ReportAgent:
     def setUrl(self, url):
         self.llmUrl = url
         return self
+    
+    def getAgent(self):
+
+        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
     
     def excute(self, prompt):
         llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)

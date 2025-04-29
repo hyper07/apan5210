@@ -90,13 +90,13 @@ if 'memory' not in st.session_state:
     
 
 # Initialize vectorstore
-if 'vectorstore' not in st.session_state:
+# if 'vectorstore' not in st.session_state:
 
     # Set value of vectorstore key to Chroma 
-    st.session_state.vectorstore = Chroma(persist_directory='db',
-                                          embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:39870',
-                                                                              model="deepseek-r1:1.5b")
-                                          )
+    # st.session_state.vectorstore = Chroma(persist_directory='db',
+    #                                       embedding_function=OllamaEmbeddings(base_url='http://host.docker.internal:39870',
+    #                                                                           model="deepseek-r1:1.5b")
+    #                                       )
 if 'llm' not in st.session_state:
     st.session_state.llm = Ollama(base_url="http://host.docker.internal:39870",
                                   model="deepseek-r1:1.5b",
@@ -185,22 +185,25 @@ else:
 
 
 left, middle, right = st.columns(3)
-if left.button("Analyzer button", use_container_width=True):
+if left.button("Analyzer", use_container_width=True):
     customAgent = AgentController.getAnalyzerAgent()
     left.markdown(customAgent.test())
-if left.button("ReportGenerator button", icon="😃", use_container_width=True):
+if right.button("Coder", icon="😃", use_container_width=True):
+    customAgent = AgentController.getCoderAgent()
+    right.markdown("You clicked the emoji button.")
+if left.button("Reporter", icon="😃", use_container_width=True):
     customAgent = AgentController.getReportAgent()
     left.markdown(customAgent.test())
-if middle.button("Reviewer button", icon=":material/mood:", use_container_width=True):
+if right.button("Insight", icon=":material/mood:", use_container_width=True):
+    customAgent = AgentController.getInsightAgent()
+    right.markdown("You clicked the Material button.")    
+if middle.button("Reviewer", icon=":material/mood:", use_container_width=True):
     customAgent = AgentController.getReviewAgent()
     middle.markdown(customAgent.test())
-if middle.button("Translater button", use_container_width=True):
+if middle.button("Translater", use_container_width=True):
     customAgent = AgentController.getTranslateAgent()
     middle.markdown(customAgent.test())
-if right.button("Emoji button", icon="😃", use_container_width=True):
-    right.markdown("You clicked the emoji button.")
-if right.button("Material button", icon=":material/mood:", use_container_width=True):
-    right.markdown("You clicked the Material button.")    
+
 
 # Example usage
 model_list = st.session_state.llms

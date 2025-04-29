@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain_community.llms import Ollama
+from controllers.serviceController import ServiceController
 from streamlit_tags import st_tags
 from utils.constants import DATA_ANALYSYS_RESPONSES
 import json
@@ -10,8 +10,6 @@ import os
 # Streamlit configuration
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Analyzer Agent")
-
-llm = Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:39870", verbose=True)
 
 def clear_chat():
     st.session_state.dataAnalysis["analyzer"]["message"] = ""
@@ -89,20 +87,6 @@ else:
 
 # Chat interface
 if "df" in st.session_state.dataAnalysis["analyzer"]:
-    try:
-        agent = create_pandas_dataframe_agent(
-            llm=llm,
-            df=st.session_state.dataAnalysis["analyzer"]["df"],
-            verbose=True,
-            max_iterations=1000,
-            agent_type="zero-shot-react-description",
-            extra_tools=[],
-            handle_parsing_errors=True,
-            allow_dangerous_code=True
-        )
-    except ValueError as e:
-        st.error(f"Agent creation failed: {str(e)}")
-        st.stop()
 
     prompt = st.chat_input("Ask about your data or model selection")
     prediction_variable = st.session_state.get("prediction_variable", None)
@@ -110,79 +94,34 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
         if not prediction_variable or prediction_variable == "":
             st.warning("Please select a prediction (target) variable before asking a question.")
         else:
-            # Always overwrite to keep only the latest exchange
             st.session_state.dataAnalysis["analyzer"]["message"] = {"user": prompt}
-            # Re-render only the latest user prompt
             with st.chat_message("user"):
                 st.markdown(prompt)
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing data..."):
-                    max_retries = 60
-                    retry_count = 0
-
                     try:
+                        agent = ServiceController.create_agent(st.session_state.dataAnalysis["analyzer"]["df"].head(5), st.session_state.dataAnalysis["analyzer"]["variables_list"], st.session_state.dataAnalysis["analyzer"]["target_variable"])
+
                         df = st.session_state.dataAnalysis["analyzer"]["df"]
-                      
-
-                        while retry_count <= max_retries:
-                            try:
-                                response = agent.invoke({
-                                    "input": f"""For analyzing this dataset and recommend machine learning models considering:
-                                    1. Data types: {dict(df.dtypes.apply(lambda x: str(x)))}
-                                    2. Sample Data: {df.head(5).to_dict()}
-                                    3. Available Variables: {list(df.columns)}
-                                    4. Target Variable: {prediction_variable}
-                                    {prompt}
-                                    Output ONLY in JSON format, inside triple backticks like this:
-                                    ```
-                                    [{{
-                                        "ml_model": "Model name",
-                                        "pros": "Pros of model",
-                                        "cons": "Cons of model",
-                                        "explanation": "Explanation why model fits"
-                                    }}]
-                                    ```
-                                    DO NOT include any other text outside the triple backticks."""
-                                })
-                                break  # Success
-                            except Exception as e:
-                                retry_count += 1
-                                if retry_count > max_retries:
-                                    raise e  # If still broken after retries, raise error
-                                # else:
-                                #     st.warning(f"Parsing failed, retrying ({retry_count}/{max_retries})...")
-
-                        # Then process response as normal
+                        response = ServiceController.get_analyzer_response(agent, df.head(5), prediction_variable, prompt)
+                        # ...existing code for parsing and displaying response...
                         analysis = response['output']
-
-                         # First, remove any <think>...</think> tags
                         analysis = re.sub(r"<think>.*?</think>", "", analysis, flags=re.DOTALL).strip()
-
-                        # Try to find JSON inside triple backticks
                         code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", analysis)
-
                         if code_block:
                             json_text = code_block.group(1)
                         else:
-                            # No triple backticks, fallback to extract JSON manually
                             json_match = re.search(r"(\[.*\])", analysis, re.DOTALL)
                             if json_match:
                                 json_text = json_match.group(1)
                             else:
                                 raise ValueError("No valid JSON found in the output.")
-
-                        # Now safely parse the JSON
                         try:
                             parsed_analysis = json.loads(json_text)
-
                             st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
                             st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
                         except json.JSONDecodeError as e:
                             raise ValueError(f"JSON decoding failed: {str(e)}")
-
-                        # Use parsed_analysis as your final output
-                        # Display the parsed analysis in a more readable markdown format
-   
                     except Exception as e:
                         st.error(f"Analysis failed: {str(e)}")
 

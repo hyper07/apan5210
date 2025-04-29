@@ -1,34 +1,16 @@
-
 from pathlib import Path
 import os
 
 from langchain_community.llms import Ollama
-from langchain_community.llms import LlamaCpp
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.document_loaders import UnstructuredExcelLoader
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chat_models import ChatOpenAI
-from langchain.indexes import VectorstoreIndexCreator
-from langchain.chains import RetrievalQA
-from langchain_community.embeddings import HuggingFaceEmbeddings
-
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain_community.document_loaders import CSVLoader
-from langchain.embeddings import OllamaEmbeddings
-from streamlit_tags import st_tags, st_tags_sidebar
-
-import streamlit as st
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
 
 
 ## presetting by Jing
 class CodeAgent:
-    def __init__(self, var1=os.getenv("DEFAULT_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
+    def __init__(self, var1=os.getenv("DEFAULT_CODER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
         self.llmUrl = var2
+
 
     def getModel(self):  
 
@@ -57,26 +39,43 @@ class CodeAgent:
         self.apikey = apikey
 
         return self
+
+    def getAgent(self):
+
+        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
     
-    def generate(self, analysis: str) -> str:
-        presetting ="You are an AI coding assistant. \
-            You will receive recommended machine learning model(s) for a given dataset and analysis task. \
-            Your job is to generate Python code for each recommended model. \
-            If multiple models are provided, generate separate, clearly labeled Python code blocks for each one. \
-            Ensure the code includes all essential steps for model training and evaluation, such as data splitting, fitting, and prediction. \
-            Do not explain or justify the model choices—focus only on clean, executable Python code for each model. \
-            Respond in English."
+    def generate_code(self, selected_model, file_path, prediction_variable, user_prompt):
+        
+        agent = self.getAgent()
 
-        payload = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "You are a data analysis expert skilled in critiquing results."},
-                {"role": "user",   "content": prompt}
-            ],
-            "temperature": 0.0
-        }
+        df = pd.read_csv(file_path, encoding='utf-8', header=0)
+        available_variables = list(df.columns)
+        feature_variables = [col for col in available_variables if col != prediction_variable]
 
-        response = requests.post(self.endpoint, json=payload, headers=self.headers)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
-        # st.session_state.messages.append({"role":"system", "content":presetting})
+        llm_prompt = f"""Generate Python code to train a '{selected_model}' model using the pandas DataFrame 'df'.
+            The file path is '{file_path}' for df.
+            The target variable is '{prediction_variable}'.
+            The available feature variables are: {feature_variables}.
+            Include steps for:
+            1. Importing necessary libraries (like pandas, scikit-learn).
+            2. Convert data to correct format for ML model.
+            3. Defining features (X) and target (y).
+            4. Splitting the data into training and testing sets.
+            5. Initializing and training the '{selected_model}' model.
+            6. Making predictions on the test set (if applicable).
+            7. Evaluating the model (e.g., accuracy, MSE, R2 score, depending on the problem type).
+
+            Consider the data types: {dict(df.dtypes.apply(lambda x: str(x)))}
+            Here's a sample of the data: {df.head(5).to_dict()}
+
+            User request: {user_prompt}
+
+            Output only the Python code block, enclosed in triple backticks like this:
+            ```python
+            # Your Python code here
+            ```
+            """
+        # Stream the response from the LLM
+        response = agent.stream(llm_prompt)
+        return response
+

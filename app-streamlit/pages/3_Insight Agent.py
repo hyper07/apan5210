@@ -4,16 +4,12 @@ from langchain_community.llms import Ollama
 from streamlit_tags import st_tags, st_tags_sidebar
 from utils.constants import DATA_ANALYSYS_RESPONSES, SAMPLE_ANALYSYS_RESPONSES
 import re
-import os
-import tempfile
-
 from controllers.serviceController import ServiceController
+from controllers.agentController import AgentController
 
 # Streamlit configuration
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Insight Agent")
-
-llm = Ollama(model="phi3:latest", base_url="http://host.docker.internal:39870", verbose=True)
 
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
     st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES
@@ -51,24 +47,21 @@ if (
             prediction_variable = analyzer.get("target_variable", "")
             feature_variables = [col for col in analyzer.get("columns", []) if col != prediction_variable]
             extracted_code = st.session_state.dataAnalysis["coder"]["code"]
-            insight_llm_prompt = f"""
-            You are an industry expert. Given the following:
-            - Model: {selected_model}
-            - Target variable: {prediction_variable}
-            - Feature variables: {feature_variables}
-            - Python code used for modeling:
-            ```python
-            {extracted_code}
-            ```
-            - Output of the code:
-            ```python
-            {st.session_state.dataAnalysis["insight"]["script_output"]}
-            ```
-            Provide an industry-specific insight or best practice in response to this user request:
-            '{insight_prompt}'
-            """
+            script_output = st.session_state.dataAnalysis["insight"]["script_output"]
+
+            agent = AgentController.getInsightAgent()
+
+            # Pass all required arguments to critique
+            insight_llm = agent.critique(
+                selected_model=selected_model,
+                prediction_variable=prediction_variable,
+                feature_variables=feature_variables,
+                extracted_code=extracted_code,
+                script_output=script_output,
+                insight_prompt=insight_prompt
+            )
             insight_response = ""
-            for chunk in llm.stream(insight_llm_prompt):
+            for chunk in insight_llm:
                 insight_response += chunk
 
             translated_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()

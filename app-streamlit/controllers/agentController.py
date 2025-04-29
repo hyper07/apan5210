@@ -26,13 +26,6 @@ class AgentController:
     def __init__(self):
         self.api_url = os.getenv("DEFAULT_API_URL", "")  # Replace with the correct hostname or IP if different
         self.model = os.getenv("DEFAULT_LLM_MODEL", "") 
-        
-        # Ollama(model="deepseek-r1:1.5b", base_url="http://host.docker.internal:39870", verbose=True)
-        # self.sample_file_path = ''
-        # self.columns = []
-        # self.file_path = "/tmp/files/"
-        # self.data_path = "/tmp/files/data/"
-        # self.folder = '/tmp/files/sample/'
 
     def setAPIUrl(self, url):
         self.api_url = url
@@ -41,22 +34,22 @@ class AgentController:
     def getAPIUrl(self):
        return self.api_url
 
-    def getAnalyzerAgent(self, ):
-        return AnalyzerAgent(self.model, self.api_url)
+    def getAnalyzerAgent():
+        return AnalyzerAgent()
 
-    def getCoderAgent(self):
-        return CodeAgent(self.model, self.api_url)
+    def getCoderAgent():
+        return CodeAgent()
 
-    def getInsightAgent(self):
-        return InsightAgent(self.model, self.api_url)
+    def getInsightAgent():
+        return InsightAgent()
 
-    def getReportAgent(self):
-        return ReportAgent(self.model, self.api_url)
+    def getReportAgent():
+        return ReportAgent()
 
-    def getReviewAgent(self):
-        return ReviewAgent(self.model, self.api_url)
+    def getReviewAgent():
+        return ReviewAgent()
 
-    def getTranslateAgent(self):
-        return TranslateAgent(self.model, self.api_url)
+    def getTranslateAgent():
+        return TranslateAgent()
     
 

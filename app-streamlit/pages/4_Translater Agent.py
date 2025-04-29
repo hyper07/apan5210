@@ -4,12 +4,12 @@ from langchain_community.llms import Ollama
 from streamlit_tags import st_tags, st_tags_sidebar
 from utils.constants import DATA_ANALYSYS_RESPONSES, SAMPLE_ANALYSYS_RESPONSES
 import re
-import os
+
+from controllers.agentController import AgentController
 # Streamlit configuration
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Translater Agent")
 
-llm = Ollama(model="qwen:1.8b", base_url="http://host.docker.internal:39870", verbose=True)
 
 # Ensure session state is initialized
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
@@ -34,7 +34,9 @@ if prompt and (translate_to_chinese or translate_to_korean):
                 f"Translate the following text to {target_language}. "
                 f"{prompt}"
             )
-            response = llm.stream(translate_prompt)
+
+            agent = AgentController.getTranslateAgent()
+            response = agent.stream(translate_prompt)
             translated_text = ""
             for chunk in response:
                 translated_text += chunk
