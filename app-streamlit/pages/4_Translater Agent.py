@@ -13,7 +13,7 @@ st.title("Translater Agent")
 
 # Ensure session state is initialized
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
-    st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES.copy()
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
 if "coder" not in st.session_state.dataAnalysis:
     st.session_state.dataAnalysis["coder"] = {"message": {}, "code": ""}

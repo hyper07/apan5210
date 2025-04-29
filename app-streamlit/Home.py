@@ -7,31 +7,13 @@ from datetime import datetime
 from controllers.serviceController import ServiceController
 from controllers.agentController import AgentController
 # from urllib.parse import urlparse
-from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS, SAMPLE_ANALYSYS_RESPONSES
+from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS, SAMPLE_ANALYSYS_RESPONSES, BACKUP_DIR
 
 st.set_page_config(layout="wide")
 st.write("# HOME")
 
 st.session_state.currentPage = "Home"
 st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES if 'dataAnalysis' not in st.session_state else st.session_state.dataAnalysis
-
-# st.write("## This is a H2 Title!1")
-# x = st.text_input("Movie", "Star Wars")
-
-# if st.button("Click Me"):
-#     st.write(f"Your favorite movie is `{x}`")
-
-# file_path = "/tmp/files/sample/movies.csv"  # Updated file path
-# if os.path.exists(file_path):
-#     try:
-#         data = pd.read_csv(file_path)
-#         st.write(data)
-#     except Exception as e:
-#         st.error(f"Error reading the file: {e}")
-
-
-# chart_data = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
-# st.bar_chart(chart_data)
 
 
 llms = ServiceController().getModelListOnly()
@@ -59,9 +41,6 @@ with st.status("Initializing models ...", expanded=True) as status:
     else:
         status.update(label="All models downloaded. Initialization complete.", expanded=True, state="complete")
 
-# Define backup path and ensure it exists
-BACKUP_DIR = os.getenv("BACKUP_DIR", "")
-os.makedirs(BACKUP_DIR, exist_ok=True)
 
 # --- Button Section ---
 col1, col2, col3 = st.columns(3)

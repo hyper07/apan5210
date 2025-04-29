@@ -12,8 +12,8 @@ from controllers.agentController import AgentController
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Coder Agent")
 
-st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES if st.session_state.dataAnalysis is None else st.session_state.dataAnalysis
-
+if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 # Remove file uploader, assume df is already in session state
 models = st.session_state.dataAnalysis["analyzer"].get("models", [])
 if len(models) > 0:

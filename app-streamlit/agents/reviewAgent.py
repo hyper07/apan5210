@@ -42,7 +42,11 @@ class ReviewAgent:
     def setUrl(self, url):
         self.llmUrl = url
         return self
-    
+ 
+    def get_llm(self):
+
+        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+
     def invoke(self, prompt):
         llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
 

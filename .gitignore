@@ -25,3 +25,4 @@ work/.gitkeep
 files/.DS_Store
 app-streamlit/.DS_Store
 /app-streamlit/files/backup
+/app-streamlit/files/pdf

@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from langchain_experimental.agents import create_pandas_dataframe_agent
 from controllers.serviceController import ServiceController
 from streamlit_tags import st_tags
 from utils.constants import DATA_ANALYSYS_RESPONSES
@@ -18,9 +17,8 @@ def clear_chat():
     st.session_state.dataAnalysis["analyzer"]["ml_model"] = ""
 
 # Initialize chat history
-if "dataAnalysis" not in st.session_state:
-    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES
-
+if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
 # File upload section (moved to main body)
 uploaded_file = st.file_uploader(
@@ -71,13 +69,13 @@ if uploaded_file:
             )
 
         # Select prediction variable
-        prediction_variable = st.selectbox(
+        target_variable = st.selectbox(
             "Select a prediction (target) variable",
-            options=[""] + columns,
-            key="prediction_variable"
+            options=[st.session_state.dataAnalysis["analyzer"].get("target_variable", "")] + columns,
+            key="target_variable"
         )
-        st.session_state.dataAnalysis["analyzer"]["variables_list"] = [col for col in columns if col != prediction_variable]
-        st.session_state.dataAnalysis["analyzer"]["target_variable"] = prediction_variable
+        st.session_state.dataAnalysis["analyzer"]["variables_list"] = [col for col in columns if col != target_variable]
+        st.session_state.dataAnalysis["analyzer"]["target_variable"] = target_variable
 
     except Exception as e:
         st.error(f"Error loading file: {str(e)}")
@@ -89,9 +87,9 @@ else:
 if "df" in st.session_state.dataAnalysis["analyzer"]:
 
     prompt = st.chat_input("Ask about your data or model selection")
-    prediction_variable = st.session_state.get("prediction_variable", None)
+    target_variable = st.session_state.dataAnalysis["analyzer"].get("target_variable", None)
     if prompt is not None:
-        if not prediction_variable or prediction_variable == "":
+        if not target_variable or target_variable == "":
             st.warning("Please select a prediction (target) variable before asking a question.")
         else:
             st.session_state.dataAnalysis["analyzer"]["message"] = {"user": prompt}
@@ -103,8 +101,8 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
                         agent = ServiceController.create_agent(st.session_state.dataAnalysis["analyzer"]["df"].head(5), st.session_state.dataAnalysis["analyzer"]["variables_list"], st.session_state.dataAnalysis["analyzer"]["target_variable"])
 
                         df = st.session_state.dataAnalysis["analyzer"]["df"]
-                        response = ServiceController.get_analyzer_response(agent, df.head(5), prediction_variable, prompt)
-                        # ...existing code for parsing and displaying response...
+                        response = ServiceController.get_analyzer_response(agent, df.head(5), target_variable, prompt)
+
                         analysis = response['output']
                         analysis = re.sub(r"<think>.*?</think>", "", analysis, flags=re.DOTALL).strip()
                         code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", analysis)

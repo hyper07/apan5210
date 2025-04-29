@@ -12,7 +12,7 @@ st.set_page_config(page_title="ML Model Advisor", layout="wide")
 st.title("Insight Agent")
 
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
-    st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy
 
 # Save the code to a temporary file
 # Run the extracted code and display output/errors

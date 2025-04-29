@@ -53,11 +53,10 @@ class TranslateAgent:
         self.apikey = apikey
 
         return self
-    
-    def getAgent(self):
+
+    def get_llm(self):
 
         return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
-    
 
     def invoke(self, prompt):
         llm = self.getAgent()

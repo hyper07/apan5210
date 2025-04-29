@@ -16,32 +16,19 @@ import os
 import time
 from controllers.agentController import AgentController
 from controllers.serviceController import ServiceController
-
+from utils.constants import DATA_ANALYSYS_RESPONSES
 
 ServiceController.initialize_llms_session_state()
 
+def clear_chat():
+    st.session_state.dataAnalysis["analyzer"]["message"] = ""
+    st.session_state.dataAnalysis["analyzer"]["variables_list"] = []
+    st.session_state.dataAnalysis["analyzer"]["target_variable"] = ""
+    st.session_state.dataAnalysis["analyzer"]["ml_model"] = ""
 
-@st.cache_data
-def load_data():
-    return pd.read_csv(folder+'bank.csv')
+if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
-# PAGE2 DATASET FUNCTIONS
-@st.cache_data
-def get_data_summary(df):
-    return {
-        "head": df.head(10),
-        "shape": df.shape,
-        "description": df.describe(),
-        "dtypes": df.dtypes,
-        "missing_values": df.isna().sum(),
-        "duplicates": df[df.duplicated()],
-    }
-# Create directories if they don't exist
-if not os.path.exists('files'):
-    os.mkdir('files')
-
-if not os.path.exists('db'):
-    os.mkdir('db')
 
 
 # Initialize template as a session state 
@@ -109,10 +96,14 @@ if 'llm' not in st.session_state:
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-st.title("Chat with your PDFs")
+st.title("APPLICATION")
 
 # Upload a PDF file
-uploaded_file = st.file_uploader("Upload your PDF", type='pdf')
+uploaded_file = st.file_uploader(
+    "Upload CSV file", 
+    type=["csv"],
+    on_change=clear_chat
+)
 
 for message in st.session_state.chat_history:
     with st.chat_message(message["role"]):
@@ -179,25 +170,20 @@ if uploaded_file is not None:
         chatbot_message = {"role": "assistant", "message": response['result']}
         st.session_state.chat_history.append(chatbot_message)
 
-
-else:
-    st.write("Please upload a PDF file.")
-
-
 left, middle, right = st.columns(3)
 if left.button("Analyzer", use_container_width=True):
     customAgent = AgentController.getAnalyzerAgent()
     left.markdown(customAgent.test())
-if right.button("Coder", icon="😃", use_container_width=True):
+if right.button("Coder", use_container_width=True):
     customAgent = AgentController.getCoderAgent()
     right.markdown("You clicked the emoji button.")
-if left.button("Reporter", icon="😃", use_container_width=True):
+if left.button("Reporter", use_container_width=True):
     customAgent = AgentController.getReportAgent()
     left.markdown(customAgent.test())
-if right.button("Insight", icon=":material/mood:", use_container_width=True):
+if right.button("Insight", use_container_width=True):
     customAgent = AgentController.getInsightAgent()
     right.markdown("You clicked the Material button.")    
-if middle.button("Reviewer", icon=":material/mood:", use_container_width=True):
+if middle.button("Reviewer", use_container_width=True):
     customAgent = AgentController.getReviewAgent()
     middle.markdown(customAgent.test())
 if middle.button("Translater", use_container_width=True):
@@ -205,15 +191,10 @@ if middle.button("Translater", use_container_width=True):
     middle.markdown(customAgent.test())
 
 
-# Example usage
-model_list = st.session_state.llms
-st.markdown(f"- **List **: {model_list}")
-st.divider()
 st.header('Overview')
 # Charger les données
-df = load_data()
-# Obtenir le résumé des données
-data_summary = get_data_summary(df)
+
+
 #TABS CONTAINERS:
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Analyzer", "Code", "Statistics", "Report", "Review"])
 with tab1:

@@ -40,13 +40,14 @@ class CodeAgent:
 
         return self
 
-    def getAgent(self):
+    def get_llm(self):
 
-        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+        return  Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+    
     
     def generate_code(self, selected_model, file_path, prediction_variable, user_prompt):
         
-        agent = self.getAgent()
+        agent = self.get_llm()
 
         df = pd.read_csv(file_path, encoding='utf-8', header=0)
         available_variables = list(df.columns)

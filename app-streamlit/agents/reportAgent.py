@@ -43,7 +43,7 @@ class ReportAgent:
         self.llmUrl = url
         return self
     
-    def getAgent(self):
+    def get_llm(self):
 
         return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
     

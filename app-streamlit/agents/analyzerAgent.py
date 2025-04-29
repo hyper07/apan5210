@@ -46,8 +46,12 @@ class AnalyzerAgent:
 
         return self
 
+    def get_llm(self):
+
+        return  Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+    
     def create_agent(self, df):
-        llm = Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+        llm = self.get_llm()
         agent = create_pandas_dataframe_agent(
             llm=llm,
             df=df,

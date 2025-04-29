@@ -17,25 +17,21 @@ llm = Ollama(model="llama3.2:1b", base_url="http://host.docker.internal:39870", 
 
 # Ensure session state is initialized
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
-    st.session_state.dataAnalysis = SAMPLE_ANALYSYS_RESPONSES.copy()
+    st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
 # Extract relevant variables
 analyzer = st.session_state.dataAnalysis["analyzer"]
-selected_model = analyzer.get("models", [{}])[0].get("ml_model", "")
+selected_model = analyzer.get("models", [])[0].get("ml_model", "") if len(analyzer.get("models", [])) > 0 else ""
 target_variable = analyzer.get("target_variable", "")
 feature_variables = [col for col in analyzer.get("columns", []) if col != target_variable]
 code = st.session_state.dataAnalysis["coder"]["code"]
-code_result = st.session_state.dataAnalysis["insight"]["script_output"]
+code_result = st.session_state.dataAnalysis["insight"]["script_output"] if "script_output" in st.session_state.dataAnalysis["insight"] else ""
 insight = st.session_state.dataAnalysis["insight"]["message"]
 
-# Button to generate report and translation buttons in a row
-col1, col2, col3 = st.columns([2, 1, 1])
+# Button to generate report
+col1, col2 = st.columns([2, 1])
 with col1:
     generate_report = st.button("Generate Report")
-with col2:
-    translate_to_chinese = st.button("Chinese")
-with col3:
-    translate_to_korean = st.button("Korean")
 
 if generate_report:
     # Construct the prompt for the LLM
@@ -58,31 +54,6 @@ if generate_report:
 
 # Language selection
 lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True)
-
-# Translation logic (manual)
-if translate_to_chinese and st.session_state.dataAnalysis["reporter"]["en"]:
-    with st.spinner("Translating to Chinese..."):
-        translate_prompt = (
-            f"Translate the following text to Chinese:\n\n"
-            f"{st.session_state.dataAnalysis['reporter']['en']}"
-        )
-        translated_text = ""
-        for chunk in llm.stream(translate_prompt):
-            translated_text += chunk
-        translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-        st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
-
-if translate_to_korean and st.session_state.dataAnalysis["reporter"]["en"]:
-    with st.spinner("Translating to Korean..."):
-        translate_prompt = (
-            f"Translate the following text to Korean:\n\n"
-            f"{st.session_state.dataAnalysis['reporter']['en']}"
-        )
-        translated_text = ""
-        for chunk in llm.stream(translate_prompt):
-            translated_text += chunk
-        translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-        st.session_state.dataAnalysis["reporter"]["kr"] = translated_text
 
 # Automatic translation when language is changed and translation is empty
 if lang == "Chinese" and not st.session_state.dataAnalysis["reporter"].get("cn") and st.session_state.dataAnalysis["reporter"].get("en"):

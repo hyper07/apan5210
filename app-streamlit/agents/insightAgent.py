@@ -39,10 +39,10 @@ class InsightAgent:
 
         return self
     
-    def getAgent(self):
+    def get_llm(self):
 
-        return Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
-    
+        return  Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
+        
 
     def critique(
         self,
@@ -53,7 +53,7 @@ class InsightAgent:
         script_output: str,
         insight_prompt: str
     ):
-        llm = self.getAgent()
+        llm = self.get_llm()
 
         insight_llm_prompt = f"""
         You are an industry expert. Given the following:
