@@ -60,24 +60,32 @@ if generate_report:
 if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dataAnalysis["reporter"]["message"] != "":
     # Language selection
 
-    lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True)
-    translater = AgentController.getTranslateAgent()
-    if lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("message"):
-        with st.spinner("Translating to Chinese..."):
-            translated_text = ""
-            st.markdown(st.session_state.dataAnalysis['reporter']['en'])
-            for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
-                translated_text += chunk
-            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-            st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
+    # Track last selected language in session state
+    if "last_report_lang" not in st.session_state:
+        st.session_state["last_report_lang"] = "English"
 
-    if lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("message"):
-        with st.spinner("Translating to Korean..."):
-            translated_text = ""
-            for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
-                translated_text += chunk
-            translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
-            st.session_state.dataAnalysis["reporter"]["kr"] = translated_text
+    lang = st.radio("Select language", ["English", "Chinese", "Korean"], horizontal=True, index=["English", "Chinese", "Korean"].index(st.session_state["last_report_lang"]))
+
+    # Only translate if language changed
+    if lang != st.session_state["last_report_lang"]:
+        translater = AgentController.getTranslateAgent()
+        if lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("message"):
+            with st.spinner("Translating to Chinese..."):
+                translated_text = ""
+                for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+                    translated_text += chunk
+                translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+                st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
+
+        if lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("message"):
+            with st.spinner("Translating to Korean..."):
+                translated_text = ""
+                for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+                    translated_text += chunk
+                translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
+                st.session_state.dataAnalysis["reporter"]["kr"] = translated_text
+
+        st.session_state["last_report_lang"] = lang
 
     # Display the report in the selected language
     if lang == "English" and st.session_state.dataAnalysis["reporter"]["en"]:
@@ -91,7 +99,7 @@ if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dat
 
     os.makedirs(pdf_dir, exist_ok=True)
     pdf_filename = f"report_{lang.lower()}.pdf"
-    pdf_path = f"{pdf_dir}/{pdf_filename}"
+    pdf_path = f"{pdf_dir}{pdf_filename}"
 
     # Get the report text for the selected language
     report_text = ""
@@ -108,7 +116,7 @@ if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dat
             if report_text:
                 # Pass all relevant context to save_pdf
                 result = ServiceController.save_pdf(
-                    st.session_state.dataAnalysis["reporter"].get("kr", "") if lang == "Korean" else st.session_state.dataAnalysis["reporter"].get("cn", "") if lang == "Chinese" else st.session_state.dataAnalysis["reporter"].get("en", ""),
+                    report_text,
                     lang,
                     selected_model=selected_model,
                     target_variable=target_variable,

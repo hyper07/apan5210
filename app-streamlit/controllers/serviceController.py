@@ -1,26 +1,6 @@
 import streamlit as st
-from langchain_community.llms import Ollama
-from langchain.chains import RetrievalQA
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.callbacks.manager import CallbackManager
-from langchain_community.llms import Ollama
-from langchain_community.embeddings.ollama import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
-import numpy as np
-import pandas as pd
 import subprocess
 import os
-import time
-from agents.analyzerAgent import AnalyzerAgent
-from agents.codeAgent import CodeAgent
-from agents.insightAgent import InsightAgent
-from agents.reportAgent import ReportAgent
-from agents.reviewAgent import ReviewAgent
-from agents.translateAgent import TranslateAgent
 import requests
 from fpdf import FPDF
 
@@ -203,11 +183,3 @@ class ServiceController:
         except Exception as e:
             return "", f"Execution failed: {e}"
 
-    @staticmethod
-    def get_analyzer_agent(df):
-        agent = AnalyzerAgent()
-        return agent.create_agent(df)
-
-    @staticmethod
-    def get_analyzer_response(agent, df, prediction_variable, prompt):
-        return AnalyzerAgent().analyze_data(agent, df, prediction_variable, prompt)

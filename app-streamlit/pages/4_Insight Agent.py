@@ -6,6 +6,7 @@ from utils.constants import DATA_ANALYSYS_RESPONSES, SAMPLE_ANALYSYS_RESPONSES
 import re
 from controllers.serviceController import ServiceController
 from controllers.agentController import AgentController
+from streamlit_ace import st_ace
 
 # Streamlit configuration
 st.set_page_config(page_title="ML Model Advisor", layout="wide")
@@ -14,9 +15,26 @@ st.title("Insight Agent")
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
     st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
+# Add a code editor for editing the code before running
+code_text = st_ace(
+    value=st.session_state.dataAnalysis["coder"]["code"],
+    language="python",
+    theme="monokai",
+    key="code_editor",
+    height=300,
+    font_size=14,
+    tab_size=4,
+    show_gutter=True,
+    show_print_margin=False,
+    wrap=True,
+    auto_update=True
+)
+st.session_state.dataAnalysis["coder"]["code"] = code_text
+
 # Save the code to a temporary file
 # Run the extracted code and display output/errors
 if st.button("Run Code"):
+    # Use the updated code from the text area
     stdout, stderr = ServiceController.run_python_script(st.session_state.dataAnalysis["coder"]["code"])
     st.session_state.dataAnalysis["insight"]["script_output"] = stdout
     st.session_state.dataAnalysis["insight"]["script_errors"] = stderr

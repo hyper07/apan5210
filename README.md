@@ -1,18 +1,73 @@
-# APAN All-in-One Docker Stack
+# APAN5210
 
-This project is an implementation of a stack based on Docker (docker-compose) using MongoDB, PostgreSQL, Express JS (Node.js), Flask, Jupyter, and more.
+This project is an implementation of a stack based on Docker (docker-compose) using Ollama and Streamlit.
 
 ## Features
 
-- **MongoDB**: NoSQL database
-- **PostgreSQL**: Relational database
-- **Express JS (Node.js)**: Web framework for Node.js
-- **Flask**: Micro web framework for Python
-- **Jupyter**: Interactive computing environment
-- **Adminer**: Database management tool
 - **Streamlit**: Web app framework for Machine Learning and Data Science
 - **Ollama**: AI model hosting and management
 - **Ollama WebUI**: Web interface for managing AI models
+
+## Agents Overview
+
+This stack consists of the following main agents/services:
+
+- **Streamlit App**  
+  Provides a user-friendly web interface for interacting with AI models hosted on Ollama. Users can submit prompts and view responses directly in the browser.
+
+- **Ollama**  
+  Hosts and manages large language models (LLMs). Exposes an API for model inference and management, which is consumed by the Streamlit app and Ollama WebUI.
+
+- **Ollama WebUI**  
+  A web-based management interface for Ollama, allowing users to manage models, view logs, and monitor usage.
+
+### How They Work Together
+
+1. The **Streamlit App** communicates with the **Ollama API** to send user prompts and receive model responses.
+2. The **Ollama WebUI** provides administrative capabilities for managing models and monitoring Ollama.
+3. All services are containerized and communicate over a shared Docker network.
+
+## Folder Structure
+
+```
+apan5210/
+├── docker-compose.yml         # Docker Compose configuration
+├── app-streamlit/             # Source code for the Streamlit web application
+│   ├── Home.py                # Main entry point for the Streamlit app
+│   ├── agents/                # Folder for agents
+│   ├── controllers/           # Folder for contollers
+│   ├── components/            # (Optional) Custom Streamlit components
+│   ├── db/                    # Folder for chroma sql
+│   ├── files/                 # Folder for all the files
+│   ├── locales/               # Folder for locales(languages)
+│   ├── pages/                 # Folder for pages
+│   └── utils/                 # folder for contants variable file or else.
+├── docker/                    # Fodler for Dockerfile
+├── ollama/                    # Ollama service configuration (if any custom files)
+├── requirements/              # Folder for requirement files
+├── webui/                     # Ollama WebUI configuration (if any custom files)
+├── .env                       # env file
+└── README.md                  # Project documentation
+```
+## Project Structure
+
+- `app-streamlit/`: Contains the Streamlit application code.
+    - `Home.py`: Main entry point for the Streamlit app.
+    - `agents/`: Folder for agents.
+    - `controllers/`: Folder for controllers.
+    - `components/`: (Optional) Custom Streamlit components or widgets.
+    - `db/`: Folder for Chroma SQL database.
+    - `files/`: Folder for all the files.
+    - `locales/`: Folder for localization (languages).
+    - `pages/`: Folder for additional pages.
+    - `utils/`: Folder for constants and utility/helper functions.
+- `ollama/`: (Optional) Custom configuration for Ollama, if needed.
+- `webui/`: (Optional) Custom configuration for Ollama WebUI, if needed.
+- `docker/`: Folder for Dockerfile.
+- `requirements/`: Folder for requirement files.
+- `docker-compose.yml`: Defines and configures all services and their networking.
+- `.env`: Environment variables file.
+- `README.md`: This documentation file.
 
 ## Building & Running
 
@@ -21,7 +76,7 @@ This project is an implementation of a stack based on Docker (docker-compose) us
 git clone git@github.com:hyper07/apan5210.git
 
 # Move to the project directory
-cd apan-project/
+cd apan5210/
 
 # Build and run the containers
 docker-compose up -d
@@ -29,61 +84,6 @@ docker-compose up -d
 # Stop and remove the containers
 docker-compose down
 ```
-
-## Resolving "Permission denied (publickey)" Error
-
-If you encounter the "Permission denied (publickey)" error when cloning the repository, follow these steps:
-
-1. **Check for existing SSH keys**:
-    ```sh
-    ls -al ~/.ssh
-    ```
-
-2. **Generate a new SSH key** (if you don't have one):
-    ```sh
-    ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-    ```
-
-3. **Add your SSH key to the ssh-agent**:
-    ```sh
-    eval "$(ssh-agent -s)"
-    ssh-add ~/.ssh/id_rsa
-    ```
-
-4. **Add the SSH key to your GitHub account**:
-    - Copy the SSH key to your clipboard:
-        ```sh
-        cat ~/.ssh/id_rsa.pub
-        ```
-    - Go to [GitHub SSH settings](https://github.com/settings/keys) and click "New SSH key".
-    - Paste your SSH key and save.
-
-5. **Test your SSH connection**:
-    ```sh
-    ssh -T git@github.com
-    ```
-
-## Accessing Services
-
-### MongoDB
-- **Connection String**:
-  ```python
-  from pymongo import MongoClient
-  client = MongoClient('mongodb://admin:PassW0rd@apan5210-mongo:27017/')
-  ```
-
-
-### Jupyter
-
-- **Web Interface**: [http://localhost:8877](http://localhost:8877)
-
-### Adminer
-
-- **Web Interface**: [http://localhost:9090](http://localhost:9090)
-
-### Flask App
-
-- **Web Interface**: [http://localhost:5210](http://localhost:5210)
 
 ### Streamlit App
 
@@ -97,21 +97,13 @@ If you encounter the "Permission denied (publickey)" error when cloning the repo
 
 - **Web Interface**: [http://localhost:39090](http://localhost:39090)
 
-
 ### Ollama API
 
-https://github.com/ollama/ollama/blob/main/docs/api.md
-
-
+- [Ollama API Documentation](https://github.com/ollama/ollama/blob/main/docs/api.md)
 
 ## Additional Information
 
 - **Docker Network**: All services are connected via a custom Docker network `apan5210-net`.
 - **Volumes**: Persistent data storage is managed using Docker volumes.
-
-
-
-
-
 
 For more detailed information on each service, please refer to the respective documentation.

@@ -16,6 +16,7 @@ from utils.constants import DATA_ANALYSYS_RESPONSES
 from utils.constants import CHROMA_SETTINGS
 
 from agents.reviewAgent import ReviewAgent  # <-- Add this import
+from controllers.agentController import AgentController
 
 persist_directory = "db"
 
@@ -24,13 +25,18 @@ st.title("Review Agent")
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
     st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
 
-review_agent = ReviewAgent(var1="llama3.2:1b", var2="http://host.docker.internal:39870")  # <-- Instantiate ReviewAgent
-llm = review_agent.get_llm()  # <-- Use ReviewAgent to get the LLM
 
-device = torch.device('cpu')
+if torch.cuda.is_available():
+    device = torch.device('cuda')  # Use Nvidia GPU if available
+elif torch.backends.mps.is_available():
+    device = torch.device('mps')  # Use Metal (Apple Silicon) if available
+else:
+    device = torch.device('cpu')  # Fallback to CPU
+
+hf_cache = "/tmp/files/.cache/huggingface/hub"
+os.environ["HUGGINGFACE_HUB_CACHE"] = hf_cache
 
 checkpoint = "MBZUAI/LaMini-T5-738M"
-# print(f"Checkpoint path: {checkpoint}")  # Add this line for debugging
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 base_model = AutoModelForSeq2SeqLM.from_pretrained(
     checkpoint,
@@ -100,6 +106,16 @@ def review_report_with_llm(pdf_path):
         "Please review the following report and provide feedback on its clarity, completeness, and overall quality:\n\n"
         + full_text[:4000]  # Truncate if needed for context length
     )
+
+    # review_agent = ReviewAgent(var1="llama3.2:1b", var2="http://host.docker.internal:39870")
+    # llm = review_agent.get_llm()
+
+    review_agent = AgentController.getReviewAgent() 
+    # review_agent.setModel("llama3.2:1b")  # <-- Set the model
+    llm = review_agent.get_llm()  # <-- Use ReviewAgent to get the LLM
+
+
+
     review = llm(review_prompt)
     if isinstance(review, list):
         return review[0]['generated_text']
@@ -115,5 +131,5 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
             with st.spinner("Reviewing report..."):
                 review_result = review_report_with_llm(report_path)
             st.success("Review completed!")
-            st.markdown("#### LLM Review Output:")
+            st.markdown("#### Review Output:")
             st.write(review_result)

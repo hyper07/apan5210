@@ -6,6 +6,7 @@ streamlit-tags
 streamlit-modal
 streamlit_javascript
 streamlit-chat
+streamlit_ace
 st-pages
 click
 np_utils
