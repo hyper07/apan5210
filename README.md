@@ -39,7 +39,7 @@ apan5210/
 │   ├── files/                    # Folder for all the files
 │   ├── locales/                  # Folder for locales(languages)
 │   ├── pages/                    # Folder for additional pages
-│   │   ├── 0_Data Analysis.py    # Page for performing data analysis
+│   │   ├── 0_Data Analysis.py    # Smaple Page for performing data analysis (kk3789)
 │   │   ├── 1_Analyzer Agent.py   # Page showcasing the analyzer agent functionality (ky2604)
 │   │   ├── 2_Corder Agent.py     # Page for corder agent functionality (jx2617)
 │   │   ├── 3_Translater Agent.py # Page for translator agent functionality (sw3970)
