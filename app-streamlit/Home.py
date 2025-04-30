@@ -97,7 +97,7 @@ with col3:
 
 
 if llms:
-    st.write("### Available Models:")
+    st.write("### Available LLM Models:")
     st.selectbox("", llms, on_change=None)
 else:
     st.write("No models available.")
