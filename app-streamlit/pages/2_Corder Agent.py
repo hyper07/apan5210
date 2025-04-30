@@ -51,12 +51,13 @@ if (
                     agent = AgentController.getCoderAgent()
 
                     # Call generate_code with all required arguments
-                    response = agent.generate_code(
+
+                    response = st.write_stream(agent.generate_code(
                         selected_model=selected_model,
                         file_path=st.session_state.dataAnalysis["analyzer"].get("file_path"),
                         prediction_variable=prediction_variable,
                         user_prompt=prompt
-                    )
+                    ))
 
                     code_output = ""
                     for chunk in response:

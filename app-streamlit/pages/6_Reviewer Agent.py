@@ -23,7 +23,8 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
                 documents = loader.load()
                 full_text = " ".join([doc.page_content for doc in documents])
                 review_agent = AgentController.getReviewAgent() 
-                response = review_agent.stream(full_text)
+
+                response = st.write_stream(review_agent.stream(full_text))
                 reviewer_response = ""
                 for chunk in response:
                     if isinstance(chunk, dict):
@@ -36,6 +37,7 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
 
             st.success("Review completed!")
             st.markdown("#### Review Output:")
+            st.rerun()
 
         # --- Language selection and translation ---
         if "reviewer" in st.session_state.dataAnalysis and st.session_state.dataAnalysis["reviewer"].get("message"):
@@ -54,8 +56,10 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
                 translater = AgentController.getTranslateAgent()
                 if lang == "Chinese" and st.session_state.dataAnalysis["reviewer"].get("message"):
                     with st.spinner("Translating to Chinese..."):
+
+                        response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis['reviewer']['message']))
                         translated_text = ""
-                        for chunk in translater.stream(lang, st.session_state.dataAnalysis['reviewer']['message']):
+                        for chunk in response:
                             if isinstance(chunk, dict):
                                 translated_text += chunk.get("text", str(chunk))
                             else:
@@ -65,8 +69,11 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
 
                 if lang == "Korean" and st.session_state.dataAnalysis["reviewer"].get("message"):
                     with st.spinner("Translating to Korean..."):
+
+                        response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis['reviewer']['message']))
+
                         translated_text = ""
-                        for chunk in translater.stream(lang, st.session_state.dataAnalysis['reviewer']['message']):
+                        for chunk in response:
                             if isinstance(chunk, dict):
                                 translated_text += chunk.get("text", str(chunk))
                             else:
@@ -84,3 +91,5 @@ if "dataAnalysis" in st.session_state and "reporter" in st.session_state.dataAna
             elif lang == "Korean" and st.session_state.dataAnalysis["reviewer"].get("kr"):
                 st.markdown(st.session_state.dataAnalysis["reviewer"]["kr"])
 
+    else:
+        st.warning("Please save PDF from Reporter.")

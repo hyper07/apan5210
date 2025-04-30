@@ -44,7 +44,10 @@ if generate_report:
     )
 
     agent = AgentController.getReportAgent()
-    response = agent.stream(report_prompt)
+    # response = agent.stream(report_prompt)
+
+    response = st.write_stream(agent.stream(report_prompt))
+
 
     report_response = ""
     for chunk in response:
@@ -52,6 +55,7 @@ if generate_report:
     result_text = re.sub(r"<think>.*?</think>", "", report_response, flags=re.DOTALL).strip()
     st.session_state.dataAnalysis["reporter"]["message"] = result_text
     st.session_state.dataAnalysis["reporter"]["en"] = result_text
+    st.rerun()
 
 
 if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dataAnalysis["reporter"]["message"] != "":
@@ -68,16 +72,21 @@ if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dat
         translater = AgentController.getTranslateAgent()
         if lang == "Chinese" and st.session_state.dataAnalysis["reporter"].get("message"):
             with st.spinner("Translating to Chinese..."):
+                
+                response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']))
                 translated_text = ""
-                for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+                for chunk in response:
                     translated_text += chunk
                 translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
                 st.session_state.dataAnalysis["reporter"]["cn"] = translated_text
-
+        # Korean translation
         if lang == "Korean" and st.session_state.dataAnalysis["reporter"].get("message"):
             with st.spinner("Translating to Korean..."):
+
+                response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']))
                 translated_text = ""
-                for chunk in translater.stream(lang, st.session_state.dataAnalysis['reporter']['message']):
+
+                for chunk in response:
                     translated_text += chunk
                 translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
                 st.session_state.dataAnalysis["reporter"]["kr"] = translated_text

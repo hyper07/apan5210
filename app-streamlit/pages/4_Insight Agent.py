@@ -74,13 +74,17 @@ if (
                 extracted_code=extracted_code,
                 insight_prompt=insight_prompt
             )
+
+            response = st.write_stream(insight_llm)
+
             insight_response = ""
-            for chunk in insight_llm:
+            for chunk in response:
                 insight_response += chunk
 
             response_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()
             st.session_state.dataAnalysis["insight"]["message"] = response_text
             st.session_state.dataAnalysis["insight"]["en"] = response_text
+            st.rerun()
 
 # --- Language selection and translation ---
 if "message" in st.session_state.dataAnalysis["insight"] and st.session_state.dataAnalysis["insight"]["message"]:
@@ -92,8 +96,9 @@ if "message" in st.session_state.dataAnalysis["insight"] and st.session_state.da
     if lang == "Chinese" and st.session_state.dataAnalysis["insight"].get("message"):
         with st.spinner("Translating to Chinese..."):
 
+            response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")))
             translated_text = ""
-            for chunk in translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")):
+            for chunk in response:
                 translated_text += chunk
             translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
             st.session_state.dataAnalysis["insight"]["cn"] = translated_text
@@ -101,8 +106,10 @@ if "message" in st.session_state.dataAnalysis["insight"] and st.session_state.da
     if lang == "Korean" and st.session_state.dataAnalysis["insight"].get("message"):
         with st.spinner("Translating to Korean..."):
 
+            response = st.write_stream(translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")))
+
             translated_text = ""
-            for chunk in translater.stream(lang, st.session_state.dataAnalysis["insight"].get("message")):
+            for chunk in response:
                 translated_text += chunk
             translated_text = re.sub(r"<think>.*?</think>", "", translated_text, flags=re.DOTALL).strip()
             st.session_state.dataAnalysis["insight"]["kr"] = translated_text
