@@ -51,7 +51,6 @@ if (
                     agent = AgentController.getCoderAgent()
 
                     # Call generate_code with all required arguments
-
                     response = st.write_stream(agent.generate_code(
                         selected_model=selected_model,
                         file_path=st.session_state.dataAnalysis["analyzer"].get("file_path"),
@@ -68,7 +67,6 @@ if (
                         extracted_code = code_block_match.group(1).strip()
                     else:
                         extracted_code = code_output.strip()
-                    st.code(extracted_code, language="python")
+                    # st.code(extracted_code, language="python")
                     st.session_state.dataAnalysis["coder"]["message"]["assistant"] = extracted_code
                     st.session_state.dataAnalysis["coder"]["code"] = extracted_code
-
