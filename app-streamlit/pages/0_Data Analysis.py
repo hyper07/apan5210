@@ -1,6 +1,5 @@
 #imports
 import streamlit as st
-import os
 import numpy as np
 import pandas as pd
 import random
@@ -9,16 +8,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, RobustScaler, OrdinalEncoder, LabelEncoder
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from sklearn.tree import DecisionTreeClassifier
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -431,12 +423,6 @@ def plot_confusion_matrix(cm):
     
     # Display the figure
     st.plotly_chart(fig)
-    
-    # Display the raw confusion matrix for verification
-    #st.write("Raw confusion matrix:")
-    #cm_df = cm, index=['No', 'Yes'], columns=['No', 'Yes'])
-    #st.write(cm_df)
-
 
 
 # Display the classification report

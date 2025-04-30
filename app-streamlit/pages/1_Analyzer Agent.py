@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from controllers.serviceController import ServiceController
 from controllers.agentController import AgentController
 from streamlit_tags import st_tags
 from utils.constants import DATA_ANALYSYS_RESPONSES

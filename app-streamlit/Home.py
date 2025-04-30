@@ -6,7 +6,6 @@ import json
 from datetime import datetime
 from controllers.serviceController import ServiceController
 from controllers.agentController import AgentController
-# from urllib.parse import urlparse
 from utils.constants import DATA_ANALYSYS_RESPONSES, REQUIRED_MODELS, SAMPLE_ANALYSYS_RESPONSES, BACKUP_DIR
 
 st.set_page_config(layout="wide")

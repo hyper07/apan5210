@@ -1,10 +1,13 @@
-import streamlit as st
-from streamlit_tags import st_tags
-from langchain.document_loaders import PDFMinerLoader 
+
 import pandas as pd
 import os
 import json
 import re
+
+import streamlit as st
+from streamlit_tags import st_tags
+from langchain.document_loaders import PDFMinerLoader 
+from streamlit_ace import st_ace
 from controllers.agentController import AgentController
 from controllers.serviceController import ServiceController
 from utils.constants import DATA_ANALYSYS_RESPONSES
@@ -115,8 +118,6 @@ with tab1:
 
         if json_text is None:
                 st.error("Could not extract valid JSON from the streamed response.")
-                # Optionally display the raw analysis string for debugging
-                # st.text_area("Raw Response:", analysis_str, height=200)
                 raise ValueError("No valid JSON found in the output after streaming.")
 
         try:
@@ -124,9 +125,8 @@ with tab1:
             json_text = json_text.replace('\\n', '\n').replace('\\"', '"') # Basic cleaning
             parsed_analysis = json.loads(json_text)
             st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
-            # Store the raw analysis string and parsed JSON in the message history
-            st.session_state.dataAnalysis["analyzer"]["message"]["assistant_raw"] = analysis_str
-            st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
+            st.session_state.dataAnalysis["analyzer"]["message"] = analysis_str
+
         except json.JSONDecodeError as e:
             st.error(f"JSON decoding failed after streaming: {str(e)}")
             # st.text_area("Failed JSON Text:", json_text, height=150)
@@ -147,7 +147,6 @@ with tab2:
         st.info("No model available. Please back to Analyzer agent to get the model list.")
         st.stop()
 
-    # Chat interface only if a model is selected
     if (
         st.session_state.dataAnalysis["analyzer"].get("models")
         and st.session_state.dataAnalysis["analyzer"].get("models") != []
@@ -196,7 +195,40 @@ with tab2:
 
 
 with tab3:
+
+    # Add a code editor for editing the code before running
+    code_text = st_ace(
+        value=st.session_state.dataAnalysis["coder"]["code"],
+        language="python",
+        theme="monokai",
+        key="code_editor",
+        height=300,
+        font_size=14,
+        tab_size=4,
+        show_gutter=True,
+        show_print_margin=False,
+        wrap=True,
+        auto_update=True
+    )
+    st.session_state.dataAnalysis["coder"]["code"] = code_text
+
+    if st.button("Run Code"):
+   
+        stdout, stderr = ServiceController.run_python_script(st.session_state.dataAnalysis["coder"]["code"])
+        st.session_state.dataAnalysis["insight"]["script_output"] = stdout
+        st.session_state.dataAnalysis["insight"]["script_errors"] = stderr
+
+    # Display the output and errors if they exist in session state
+    if "script_output" in st.session_state.dataAnalysis["insight"] and st.session_state.dataAnalysis["insight"]["script_output"]:
+        st.subheader("Script Output")
+        st.text(st.session_state.dataAnalysis["insight"]["script_output"])
+    if "script_errors" in st.session_state.dataAnalysis["insight"] and st.session_state.dataAnalysis["insight"]["script_errors"]:
+        st.subheader("Script Errors")
+        st.text(st.session_state.dataAnalysis["insight"]["script_errors"])
+
     if st.button("What Insight?", key="insight_tab3"):
+        
+
         with st.spinner("Getting industry insight..."):
             analyzer = st.session_state.dataAnalysis["analyzer"]
             selected_model = st.session_state.dataAnalysis["coder"].get("selected_model","")
@@ -224,6 +256,7 @@ with tab3:
             response_text = re.sub(r"<think>.*?</think>", "", insight_response, flags=re.DOTALL).strip()
             st.session_state.dataAnalysis["insight"]["message"] = response_text
             st.session_state.dataAnalysis["insight"]["en"] = response_text
+            st.rerun()
 
     # --- Translation and language selection ---
     if "message" in st.session_state.dataAnalysis["insight"] and st.session_state.dataAnalysis["insight"]["message"]:
@@ -285,6 +318,7 @@ with tab4:
         result_text = re.sub(r"<think>.*?</think>", "", report_response, flags=re.DOTALL).strip()
         st.session_state.dataAnalysis["reporter"]["message"] = result_text
         st.session_state.dataAnalysis["reporter"]["en"] = result_text
+        st.rerun()
         
         # --- Translation and language selection ---
     if "message" in st.session_state.dataAnalysis["reporter"] and st.session_state.dataAnalysis["reporter"]["message"]:
@@ -340,9 +374,10 @@ with tab4:
         with col_pdf1:
             if st.button("Save as PDF"):
                 if report_text:
-                    # Pass all relevant context to save_pdf
+
                     feature_variables = [col for col in st.session_state.dataAnalysis["analyzer"].get("variables_list", []) if col != st.session_state.dataAnalysis["analyzer"].get("target_variable", "")]
 
+                    # Pass all relevant context to save_pdf
                     result = ServiceController.save_pdf(
                         report_text,
                         lang,
@@ -392,6 +427,7 @@ with tab5:
 
         st.success("Review completed!")
         st.markdown("#### Review Output:")
+        st.rerun()
     
     # --- Language selection and translation ---
     if "reviewer" in st.session_state.dataAnalysis and st.session_state.dataAnalysis["reviewer"].get("message"):

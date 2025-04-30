@@ -3,7 +3,6 @@ from pathlib import Path
 import os
 from langchain_community.llms import Ollama
 
-
 class TranslateAgent:
     def __init__(self, var1=os.getenv("DEFAULT_TRANSLATER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
         self.llmModel = var1
