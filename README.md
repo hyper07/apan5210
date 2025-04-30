@@ -1,11 +1,11 @@
 # APAN5210 (Team 5)
 
-Kibaek Kim (kk3789)
-Shuyi Wang (sw3970)
-Shuteng Xie (sx2405)
-Angelina Ying (ky2604)
-Jing Xiao (jx2617)
-Sze Ning Tan (st3730)
+- Kibaek Kim (kk3789)
+- Shuyi Wang (sw3970)
+- Shuteng Xie (sx2405)
+- Angelina Ying (ky2604)
+- Jing Xiao (jx2617)
+- Sze Ning Tan (st3730)
 
 
 This project is an implementation of a stack based on Docker (docker-compose) using Ollama and Streamlit.
