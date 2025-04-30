@@ -46,7 +46,7 @@ apan5210/
 │   │   ├── 4_Insight Agent.py    # Page for insight agent functionality (sx2405)
 │   │   ├── 5_Reporter Agent.py   # Page for reporter agent functionality (kk3789)
 │   │   ├── 6_Reviewer Agent.py   # Page for reviewer agent functionality (st3730)
-│   │   ├── 7_Application.py      # Page for application-related functionality (kk3789)
+│   │   ├── 7_Application.py      # Page that inlcude all the agents (kk3789)
 │   │   └── 8_Setting.py          # Page for application settings (kk3789)
 │   │
 │   └── utils/                    # folder for contants variable file or else.
