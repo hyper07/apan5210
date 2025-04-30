@@ -21,7 +21,7 @@ if len(models) > 0:
     selected_model = st.selectbox(
         "Select a model to get code",
         options=[""] + [x["ml_model"] for x in models],
-        key="prediction_variable"
+        key="selected_model"
     )
 
 else:

@@ -138,8 +138,7 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
                         parsed_analysis = json.loads(json_text)
                         st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
                         # Store the raw analysis string and parsed JSON in the message history
-                        st.session_state.dataAnalysis["analyzer"]["message"]["assistant_raw"] = analysis_str
-                        st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
+                        st.session_state.dataAnalysis["analyzer"]["message"] = analysis_str
                     except json.JSONDecodeError as e:
                         st.error(f"JSON decoding failed after streaming: {str(e)}")
                         # st.text_area("Failed JSON Text:", json_text, height=150)

@@ -172,25 +172,3 @@ print(f'R-squared (R2 Score): {r2:.4f}')""",
         "file_path" : "",
     }
 }
-
-
-# [
-#     {
-#         "ml_model": "Decision Tree",
-#         "pros": "Handles categorical variables naturally, good for understanding decision paths.",
-#         "cons": "Slightly more prone to overfitting compared to Random Forests.",
-#         "explanation": "The model is suitable for problems where interactions between features are important and can capture non-linear relationships."
-#     },
-#     {
-#         "ml_model": "Random Forest",
-#         "pros": "Aggregates multiple decision trees, reducing variance and capturing complex interactions.",
-#         "cons": "Requires tuning of hyperparameters to avoid overfitting.",
-#         "explanation": "The model is effective for both linear and non-linear relationships, handling missing or partially filled data well."
-#     },
-#     {
-#         "ml_model": "Gradient Boosted Tree",
-#         "pros": "Enables modeling of highly non-linear relationships through ensemble learning.",
-#         "cons": "Requires careful tuning to avoid overfitting.",
-#         "explanation": "The model excels at capturing complex patterns and interactions in data."
-#     }
-# ]

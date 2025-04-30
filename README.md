@@ -52,9 +52,7 @@ apan5210/
 │   │
 │   └── utils/                    # folder for contants variable file or else.
 ├── docker/                       # Fodler for Dockerfile
-├── ollama/                       # Ollama service configuration (if any custom files)
 ├── requirements/                 # Folder for requirement files
-├── webui/                        # Ollama WebUI configuration (if any custom files)
 ├── .env                          # env file
 └── README.md                     # Project documentation
 ```
@@ -69,8 +67,6 @@ apan5210/
     - `locales/`: Folder for localization (languages).
     - `pages/`: Folder for application pages.
     - `utils/`: Folder for constants and utility/helper functions.
-- `ollama/`: (Optional) Custom configuration for Ollama, if needed.
-- `webui/`: (Optional) Custom configuration for Ollama WebUI, if needed.
 - `docker/`: Folder for Dockerfile.
 - `requirements/`: Folder for requirement files.
 - `docker-compose.yml`: Defines and configures all services and their networking.

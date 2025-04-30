@@ -1,6 +1,9 @@
+from pathlib import Path
 import os
+
 from langchain_community.llms import Ollama
 
+import pandas as pd
 
 class InsightAgent:
 
@@ -40,14 +43,12 @@ class InsightAgent:
 
         return  Ollama(model=self.llmModel, base_url=self.llmUrl, verbose=True)
         
-
     def critique(
         self,
         selected_model: str,
         prediction_variable: str,
         feature_variables: list,
         extracted_code: str,
-        script_output: str,
         insight_prompt: str
     ):
         llm = self.get_llm()
@@ -60,10 +61,6 @@ class InsightAgent:
         - Python code used for modeling:
         ```python
         {extracted_code}
-        ```
-        - Output of the code:
-        ```python
-        {script_output}
         ```
         Provide an industry-specific insight or best practice in response to this user request:
         '{insight_prompt}'

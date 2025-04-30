@@ -65,7 +65,6 @@ if (
             prediction_variable = analyzer.get("target_variable", "")
             feature_variables = [col for col in analyzer.get("columns", []) if col != prediction_variable]
             extracted_code = st.session_state.dataAnalysis["coder"]["code"]
-            script_output = st.session_state.dataAnalysis["insight"]["script_output"]
 
             agent = AgentController.getInsightAgent()
 
@@ -75,7 +74,6 @@ if (
                 prediction_variable=prediction_variable,
                 feature_variables=feature_variables,
                 extracted_code=extracted_code,
-                script_output=script_output,
                 insight_prompt=insight_prompt
             )
             insight_response = ""
