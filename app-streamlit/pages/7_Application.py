@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_tags import st_tags
 from langchain_community.llms import Ollama
 from langchain.chains import RetrievalQA
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
@@ -26,67 +27,11 @@ def clear_chat():
     st.session_state.dataAnalysis["analyzer"]["target_variable"] = ""
     st.session_state.dataAnalysis["analyzer"]["ml_model"] = ""
 
+st.title("APPLICATION")
+
+
 if "dataAnalysis" not in st.session_state or st.session_state.dataAnalysis is None:
     st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES.copy()
-
-
-
-# Initialize template as a session state 
-if 'template' not in st.session_state:
-
-    # Set value of template key
-    st.session_state.template = """
-    
-    You are a knowledgeable chatbot, here to help with questions of the user. 
-    Your tone should be polite, professional and informative.
-
-    Context: {context}
-    History: {history}
-
-    User: {question}
-    Chatbot:
-
-    """
-
-
-
-
-# Initialize prompt as a session state
-if 'prompt' not in st.session_state:
-
-    # Set value of prompt key to PromptTemplate from langchain.prompts
-    st.session_state.prompt = PromptTemplate(
-        
-        # Set input variables 
-        input_variables=["history", "context", "question"],
-        
-        # Set template to the session state, template 
-        template=st.session_state.template,
-    )
-
-# Initialize memory as a session state
-if 'memory' not in st.session_state:
-    # Set value of memory key to ConversationBufferMemory from langchain.memory
-    st.session_state.memory = ConversationBufferMemory(
-        # Set params from input variables list
-        memory_key="history",
-        return_messages=True,
-        input_key="question")
-    
-
-if 'llm' not in st.session_state:
-    st.session_state.llm = Ollama(base_url="http://host.docker.internal:39870",
-                                  model="deepseek-r1:1.5b",
-                                  verbose=True,
-                                  callback_manager=CallbackManager(
-                                      [StreamingStdOutCallbackHandler()]),
-                                  )
-
-# Initialize session state
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
-
-st.title("APPLICATION")
 
 # Upload a PDF file
 uploaded_file = st.file_uploader(
@@ -95,90 +40,67 @@ uploaded_file = st.file_uploader(
     on_change=clear_chat
 )
 
-for message in st.session_state.chat_history:
-    with st.chat_message(message["role"]):
-        st.markdown(message["message"])
-
 if uploaded_file is not None:
-    if not os.path.isfile("files/"+uploaded_file.name+".csv"):
-        with st.status("Loading csv to dataframe..."):
-            bytes_data = uploaded_file.read()
-            f = open("files/"+uploaded_file.name, "wb")
-            f.write(bytes_data)
-            f.close()
-            loader = PyPDFLoader("files/"+uploaded_file.name+".pdf")
-            data = loader.load()
+    try:
+        # If uploaded_file is a string (from file_path), read as path; else, as file-like object
+        if isinstance(uploaded_file, str):
+            df = pd.read_csv(uploaded_file)
+            uploaded_file_name = os.path.basename(uploaded_file)
+        else:
+            df = pd.read_csv(uploaded_file)
+            uploaded_file_name = uploaded_file.name if hasattr(uploaded_file, "name") else "analysis_data.csv"
 
-            # Initialize text splitter
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1500,
-                chunk_overlap=200,
-                length_function=len
+        # Fix duplicated folder in file_path
+        default_sample_path = os.getenv("DEFAULT_SAMPLE_PATH", "")
+        file_path = os.path.join(default_sample_path, uploaded_file_name)
+        st.session_state["dataAnalysis"]["analyzer"]["file_path"] = file_path
+        df.to_csv(file_path, index=False)
+        st.session_state.dataAnalysis["analyzer"]["df"] = df.head(5)
+        st.success("File successfully loaded!")
+        st.write("Data Preview:")
+        st.dataframe(df.head(5))
+        # Display all available variables
+        columns = list(df.columns)
+        st_tags(
+            label='#### Available variables:',
+            text='',
+            value=columns,
+            suggestions=columns,
+            maxtags = len(columns),
+            key=None
             )
-            all_splits = text_splitter.split_documents(data)
 
-            # Create and persist the vector store
-            st.session_state.vectorstore = Chroma.from_documents(
-                documents=all_splits,
-                embedding=OllamaEmbeddings(model="llama3")
-            )
-            st.session_state.vectorstore.persist()
-
-    st.session_state.retriever = st.session_state.vectorstore.as_retriever()
-    # Initialize the QA chain
-    if 'qa_chain' not in st.session_state:
-        st.session_state.qa_chain = RetrievalQA.from_chain_type(
-            llm=st.session_state.llm,
-            chain_type='stuff',
-            retriever=st.session_state.retriever,
-            verbose=True,
-            chain_type_kwargs={
-                "verbose": True,
-                "prompt": st.session_state.prompt,
-                "memory": st.session_state.memory,
-            }
+        # Select prediction variable
+        target_variable = st.selectbox(
+            "Select a prediction (target) variable",
+            options=[st.session_state.dataAnalysis["analyzer"].get("target_variable", "")] + columns,
+            key="target_variable"
         )
+        st.session_state.dataAnalysis["analyzer"]["variables_list"] = [col for col in columns if col != target_variable]
+        st.session_state.dataAnalysis["analyzer"]["target_variable"] = target_variable
 
-    # Chat input
-    if user_input := st.chat_input("You:", key="user_input"):
-        user_message = {"role": "user", "message": user_input}
-        st.session_state.chat_history.append(user_message)
-        with st.chat_message("user"):
-            st.markdown(user_input)
-        with st.chat_message("assistant"):
-            with st.spinner("Assistant is typing..."):
-                response = st.session_state.qa_chain(user_input)
-            message_placeholder = st.empty()
-            full_response = ""
-            for chunk in response['result'].split():
-                full_response += chunk + " "
-                time.sleep(0.05)
-                # Add a blinking cursor to simulate typing
-                message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
+    except Exception as e:
+        st.error(f"Error loading file: {str(e)}")
+else:
+    st.info("👆 Upload a .csv file first.")
+    st.stop()
 
-        chatbot_message = {"role": "assistant", "message": response['result']}
-        st.session_state.chat_history.append(chatbot_message)
-
-left, middle, right = st.columns(3)
-if left.button("Analyzer", use_container_width=True):
+lb, lmb, mb, mrb, rb = st.columns(5)
+if lb.button("Analyzer", use_container_width=True):
     customAgent = AgentController.getAnalyzerAgent()
-    left.markdown(customAgent.test())
-if right.button("Coder", use_container_width=True):
+    lb.markdown(customAgent.test())
+if lmb.button("Coder", use_container_width=True):
     customAgent = AgentController.getCoderAgent()
-    right.markdown("You clicked the emoji button.")
-if left.button("Reporter", use_container_width=True):
+    lmb.markdown("You clicked the emoji button.")
+if mb.button("Reporter", use_container_width=True):
     customAgent = AgentController.getReportAgent()
-    left.markdown(customAgent.test())
-if right.button("Insight", use_container_width=True):
+    mb.markdown(customAgent.test())
+if mrb.button("Insight", use_container_width=True):
     customAgent = AgentController.getInsightAgent()
-    right.markdown("You clicked the Material button.")    
-if middle.button("Reviewer", use_container_width=True):
+    mrb.markdown("You clicked the Material button.")    
+if rb.button("Reviewer", use_container_width=True):
     customAgent = AgentController.getReviewAgent()
-    middle.markdown(customAgent.test())
-if middle.button("Translater", use_container_width=True):
-    customAgent = AgentController.getTranslateAgent()
-    middle.markdown(customAgent.test())
+    rb.markdown(customAgent.test())
 
 
 st.header('Overview')

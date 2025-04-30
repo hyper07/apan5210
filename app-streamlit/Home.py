@@ -19,39 +19,21 @@ st.session_state.dataAnalysis = DATA_ANALYSYS_RESPONSES if 'dataAnalysis' not in
 llms = ServiceController().getModelListOnly()
 st.session_state.llms = llms
 
-def is_lamini_model_downloaded():
-    # Use /tmp/.cache/huggingface/hub as the cache directory
-    hf_cache = "/tmp/files/.cache/huggingface/hub"
-    if not os.path.exists(hf_cache):
-        return False
-    # The model folder usually starts with 'models--MBZUAI--LaMini-T5-738M'
-    for d in os.listdir(hf_cache):
-        if d.startswith("models--MBZUAI--LaMini-T5-738M"):
-            return True
-    return False
 
 with st.status("Initializing models ...", expanded=True) as status:
     common_elements = list(set(llms if llms is not None else []) & set(REQUIRED_MODELS))    
 
     if llms is None:
         st.error("Can't get models. Please check the API URL.")
-    elif len(common_elements) < 8:
-        remains = 8 - len(common_elements)
+    elif len(common_elements) < 7:
+        remains = 7 - len(common_elements)
         count = 1
         for model in REQUIRED_MODELS:
             if model not in llms:
                 status.update(
                     label=f"({count}/{remains}) Downloading {model} model ...", expanded=True, state="running"
                 )
-                # Additional: Download MBZUAI/LaMini-T5-738M if required
-                if model == "MBZUAI/LaMini-T5-738M":
-                    if not is_lamini_model_downloaded():
-                        exit_code = os.system("transformers-cli download MBZUAI/LaMini-T5-738M")
-                        if exit_code != 0:
-                            st.error("Error pulling model 'MBZUAI/LaMini-T5-738M': transformers-cli failed. Please check your environment and try again.")
-                else:
-                    result = ServiceController().pullModelFromSite(model)
-                
+                result = ServiceController().pullModelFromSite(model)
                 count += 1
 
         llms = ServiceController().getModelListOnly()

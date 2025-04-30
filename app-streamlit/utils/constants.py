@@ -10,7 +10,7 @@ DEFAULT_LLM_MODEL="deepseek-r1:1.5b"
 DEFAULT_ANALYZER_LLM_MODEL="deepseek-r1:1.5b"
 DEFAULT_CODER_LLM_MODEL="qwen2.5-coder:3b"
 DEFAULT_INSIGHT_LLM_MODEL="phi3:latest"
-DEFAULT_REPORT_LLM_MODEL="gemma3:1b"
+DEFAULT_REPORT_LLM_MODEL="exaone3.5:2.4b"
 DEFAULT_REVIEWER_LLM_MODEL="llama3.2:1b"
 DEFAULT_TRANSLATER_LLM_MODEL="phi4-mini"
 
@@ -30,7 +30,7 @@ CHROMA_SETTINGS = Settings(
         anonymized_telemetry=False
 )
 
-REQUIRED_MODELS = ["phi4-mini", "qwen2.5-coder:3b", "deepseek-r1:1.5b", "phi3:latest", "gemma3:1b", "llama3.2:1b", "all-minilm:l6-v2", "MBZUAI/LaMini-T5-738M"]
+REQUIRED_MODELS = ["phi4-mini", "qwen2.5-coder:3b", "deepseek-r1:1.5b", "phi3:latest", "exaone3.5:2.4b", "llama3.2:1b", "all-minilm:l6-v2"]
 
 DATA_ANALYSYS_RESPONSES = {
     "analyzer": {
@@ -172,3 +172,25 @@ print(f'R-squared (R2 Score): {r2:.4f}')""",
         "file_path" : "",
     }
 }
+
+
+# [
+#     {
+#         "ml_model": "Decision Tree",
+#         "pros": "Handles categorical variables naturally, good for understanding decision paths.",
+#         "cons": "Slightly more prone to overfitting compared to Random Forests.",
+#         "explanation": "The model is suitable for problems where interactions between features are important and can capture non-linear relationships."
+#     },
+#     {
+#         "ml_model": "Random Forest",
+#         "pros": "Aggregates multiple decision trees, reducing variance and capturing complex interactions.",
+#         "cons": "Requires tuning of hyperparameters to avoid overfitting.",
+#         "explanation": "The model is effective for both linear and non-linear relationships, handling missing or partially filled data well."
+#     },
+#     {
+#         "ml_model": "Gradient Boosted Tree",
+#         "pros": "Enables modeling of highly non-linear relationships through ensemble learning.",
+#         "cons": "Requires careful tuning to avoid overfitting.",
+#         "explanation": "The model excels at capturing complex patterns and interactions in data."
+#     }
+# ]

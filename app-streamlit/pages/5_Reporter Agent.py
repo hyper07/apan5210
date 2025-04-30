@@ -48,9 +48,10 @@ if generate_report:
     )
 
     agent = AgentController.getReportAgent()
+    response = agent.stream(report_prompt)
 
     report_response = ""
-    for chunk in agent.stream(report_prompt):
+    for chunk in response:
         report_response += chunk
     result_text = re.sub(r"<think>.*?</think>", "", report_response, flags=re.DOTALL).strip()
     st.session_state.dataAnalysis["reporter"]["message"] = result_text
@@ -126,7 +127,7 @@ if st.session_state.dataAnalysis["reporter"]["message"] and st.session_state.dat
                     insight=insight
                 )
                 if result:
-                    st.session_state.dataAnalysis["reporter"]["file_path"] = result
+                    st.session_state.dataAnalysis["reporter"]["file_path"] = pdf_path
                     st.success(f"PDF saved to {pdf_path}")
                 else:
                     st.error("Failed to save PDF.")

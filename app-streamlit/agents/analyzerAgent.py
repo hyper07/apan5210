@@ -21,6 +21,8 @@ from streamlit_tags import st_tags, st_tags_sidebar
 import streamlit as st
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 import pandas as pd
+import json
+import re
 
 class AnalyzerAgent:
     def __init__(self, var1=os.getenv("DEFAULT_ANALYZER_LLM_MODEL", "") , var2=os.getenv("DEFAULT_API_URL", "")):
@@ -64,9 +66,36 @@ class AnalyzerAgent:
         )
         return agent
 
-    def analyze_data(self, agent, df, prediction_variable, prompt):
-        response = agent.invoke({
+    def analyze_data(self, df, prediction_variable, prompt):
+
+        agent =  self.create_agent(df.head(5))
+
+        response = agent({
             "input": f"""For analyzing this dataset and recommend machine learning models considering:
+            1. Data types: {dict(df.dtypes.apply(lambda x: str(x)))}
+            2. Sample Data: {df.head(5).to_dict()}
+            3. Available Variables: {list(df.columns)}
+            4. Target Variable: {prediction_variable}
+            {prompt}
+            Output ONLY in JSON format, inside triple backticks like this:
+            ```
+            [{{
+                "ml_model": "Model name",
+                "pros": "Pros of model",
+                "cons": "Cons of model",
+                "explanation": "Explanation why model fits"
+            }}]
+            ```
+            DO NOT include any other text outside the triple backticks."""
+        })
+        return response
+    
+    def stream(self, df, prediction_variable, prompt):
+
+        agent =  self.get_llm()
+
+        response = agent.stream(f"""
+            "input": For analyzing this dataset and recommend machine learning models considering:
             1. Data types: {dict(df.dtypes.apply(lambda x: str(x)))}
             2. Sample Data: {df.to_dict()}
             3. Available Variables: {list(df.columns)}
@@ -82,5 +111,6 @@ class AnalyzerAgent:
             }}]
             ```
             DO NOT include any other text outside the triple backticks."""
-        })
+        )
+
         return response

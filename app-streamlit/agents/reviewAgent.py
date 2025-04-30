@@ -39,23 +39,4 @@ class ReviewAgent:
             "Please review the following report and provide feedback on its clarity, completeness, and overall quality:\n\n"
             + full_text[:self.MAX_TOKENS]
         )
-        # Try to use streaming if available, else fallback to normal call
-        if hasattr(llm, "stream"):
-            # Streaming: yield dicts with 'generated_text'
-            for chunk in llm(review_prompt):
-                # chunk could be a string or dict, normalize
-                if isinstance(chunk, dict) and "content" in chunk:
-                    yield {"generated_text": chunk["content"]}
-                elif isinstance(chunk, str):
-                    yield {"generated_text": chunk}
-                else:
-                    yield {"generated_text": str(chunk)}
-        else:
-            # Non-streaming: return a dict
-            result = llm(review_prompt)
-            if isinstance(result, dict) and "content" in result:
-                return {"generated_text": result["content"]}
-            elif isinstance(result, str):
-                return {"generated_text": result}
-            else:
-                return {"generated_text": str(result)}
+        return llm.stream(review_prompt)

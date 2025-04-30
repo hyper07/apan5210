@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from controllers.serviceController import ServiceController
+from controllers.agentController import AgentController
 from streamlit_tags import st_tags
 from utils.constants import DATA_ANALYSYS_RESPONSES
 import json
@@ -97,34 +98,55 @@ if "df" in st.session_state.dataAnalysis["analyzer"]:
                 st.markdown(prompt)
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing data..."):
-                    try:
-                        agent = ServiceController.create_agent(st.session_state.dataAnalysis["analyzer"]["df"].head(5), st.session_state.dataAnalysis["analyzer"]["variables_list"], st.session_state.dataAnalysis["analyzer"]["target_variable"])
+                   
+                    df = st.session_state.dataAnalysis["analyzer"]["df"]
+                    
+                    # Use st.write_stream to display the streaming output
+                    stream_generator = AgentController.getAnalyzerAgent().stream(df.head(5), target_variable, prompt)
+                    analysis = st.write_stream(stream_generator) # Display stream and get full response
 
-                        df = st.session_state.dataAnalysis["analyzer"]["df"]
-                        response = ServiceController.get_analyzer_response(agent, df.head(5), target_variable, prompt)
-
-                        analysis = response['output']
-                        analysis = re.sub(r"<think>.*?</think>", "", analysis, flags=re.DOTALL).strip()
-                        code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", analysis)
-                        if code_block:
-                            json_text = code_block.group(1)
+                    # Process the complete 'analysis' string after streaming finishes
+                    # Remove potential <think> tags or other artifacts if the stream includes them
+                    analysis = re.sub(r"<think>.*?</think>", "", analysis, flags=re.DOTALL).strip()
+                    
+                    # Extract JSON (ensure analysis is treated as string)
+                    json_text = None
+                    analysis_str = str(analysis) # Ensure it's a string
+                    code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", analysis_str, re.DOTALL)
+                    if code_block:
+                        json_text = code_block.group(1).strip()
+                    else:
+                        # Fallback checks (similar to analyzerAgent logic)
+                        cleaned_response = analysis_str.strip()
+                        if (cleaned_response.startswith('{') and cleaned_response.endswith('}')) or \
+                           (cleaned_response.startswith('[') and cleaned_response.endswith(']')):
+                            json_text = cleaned_response
                         else:
-                            json_match = re.search(r"(\[.*\])", analysis, re.DOTALL)
+                            json_match = re.search(r"(\[.*\])", analysis_str, re.DOTALL)
                             if json_match:
-                                json_text = json_match.group(1)
-                            else:
-                                raise ValueError("No valid JSON found in the output.")
-                        try:
-                            parsed_analysis = json.loads(json_text)
-                            st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
-                            st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
-                        except json.JSONDecodeError as e:
-                            raise ValueError(f"JSON decoding failed: {str(e)}")
-                    except Exception as e:
-                        st.error(f"Analysis failed: {str(e)}")
+                                json_text = json_match.group(1).strip()
+
+                    if json_text is None:
+                         st.error("Could not extract valid JSON from the streamed response.")
+                         # Optionally display the raw analysis string for debugging
+                         # st.text_area("Raw Response:", analysis_str, height=200)
+                         raise ValueError("No valid JSON found in the output after streaming.")
+
+                    try:
+                        # Clean potential artifacts before parsing
+                        json_text = json_text.replace('\\n', '\n').replace('\\"', '"') # Basic cleaning
+                        parsed_analysis = json.loads(json_text)
+                        st.session_state.dataAnalysis["analyzer"]["models"] = parsed_analysis
+                        # Store the raw analysis string and parsed JSON in the message history
+                        st.session_state.dataAnalysis["analyzer"]["message"]["assistant_raw"] = analysis_str
+                        st.session_state.dataAnalysis["analyzer"]["message"]["assistant"] = parsed_analysis
+                    except json.JSONDecodeError as e:
+                        st.error(f"JSON decoding failed after streaming: {str(e)}")
+                        # st.text_area("Failed JSON Text:", json_text, height=150)
+                        raise ValueError(f"JSON decoding failed: {str(e)}")
 
     if st.session_state.dataAnalysis["analyzer"]["models"]:
-        # st.json(st.session_state.dataAnalysis["analyzer"]["models"])  # Display the JSON in a code block
+        # Display the parsed models (existing logic)
         for model in st.session_state.dataAnalysis["analyzer"]["models"]:
             model_name = model.get("ml_model", "Unknown Model")
             pros = model.get("pros", "No pros provided.")

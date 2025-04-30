@@ -31,23 +31,32 @@ This stack consists of the following main agents/services:
 
 ```
 apan5210/
-├── docker-compose.yml         # Docker Compose configuration
-├── app-streamlit/             # Source code for the Streamlit web application
-│   ├── Home.py                # Main entry point for the Streamlit app
-│   ├── agents/                # Folder for agents
-│   ├── controllers/           # Folder for contollers
-│   ├── components/            # (Optional) Custom Streamlit components
-│   ├── db/                    # Folder for chroma sql
-│   ├── files/                 # Folder for all the files
-│   ├── locales/               # Folder for locales(languages)
-│   ├── pages/                 # Folder for pages
-│   └── utils/                 # folder for contants variable file or else.
-├── docker/                    # Fodler for Dockerfile
-├── ollama/                    # Ollama service configuration (if any custom files)
-├── requirements/              # Folder for requirement files
-├── webui/                     # Ollama WebUI configuration (if any custom files)
-├── .env                       # env file
-└── README.md                  # Project documentation
+├── docker-compose.yml            # Docker Compose configuration
+├── app-streamlit/                # Source code for the Streamlit web application
+│   ├── Home.py                   # Main entry point for the Streamlit app
+│   ├── agents/                   # Folder for agents
+│   ├── controllers/              # Folder for contollers
+│   ├── db/                       # Folder for chroma sql
+│   ├── files/                    # Folder for all the files
+│   ├── locales/                  # Folder for locales(languages)
+│   ├── pages/                    # Folder for additional pages
+│   │   ├── 0_Data Analysis.py    # Page for performing data analysis
+│   │   ├── 1_Analyzer Agent.py   # Page showcasing the analyzer agent functionality
+│   │   ├── 2_Corder Agent.py     # Page for corder agent functionality
+│   │   ├── 3_Translater Agent.py # Page for translator agent functionality
+│   │   ├── 4_Insight Agent.py    # Page for insight agent functionality
+│   │   ├── 5_Reporter Agent.py   # Page for reporter agent functionality
+│   │   ├── 6_Reviewer Agent.py   # Page for reviewer agent functionality
+│   │   ├── 7_Application.py      # Page for application-related functionality
+│   │   └── 8_Setting.py          # Page for application settings
+│   │
+│   └── utils/                    # folder for contants variable file or else.
+├── docker/                       # Fodler for Dockerfile
+├── ollama/                       # Ollama service configuration (if any custom files)
+├── requirements/                 # Folder for requirement files
+├── webui/                        # Ollama WebUI configuration (if any custom files)
+├── .env                          # env file
+└── README.md                     # Project documentation
 ```
 ## Project Structure
 
@@ -55,11 +64,10 @@ apan5210/
     - `Home.py`: Main entry point for the Streamlit app.
     - `agents/`: Folder for agents.
     - `controllers/`: Folder for controllers.
-    - `components/`: (Optional) Custom Streamlit components or widgets.
     - `db/`: Folder for Chroma SQL database.
     - `files/`: Folder for all the files.
     - `locales/`: Folder for localization (languages).
-    - `pages/`: Folder for additional pages.
+    - `pages/`: Folder for application pages.
     - `utils/`: Folder for constants and utility/helper functions.
 - `ollama/`: (Optional) Custom configuration for Ollama, if needed.
 - `webui/`: (Optional) Custom configuration for Ollama WebUI, if needed.
