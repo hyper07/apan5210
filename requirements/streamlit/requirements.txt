@@ -37,7 +37,6 @@ openai
 duckduckgo-search
 anthropic
 trubrics
-chromadb
 langchain
 langchain-community
 langchain-core

@@ -1,6 +1,3 @@
-import os 
-import chromadb
-from chromadb.config import Settings 
 
 BACKUP_DIR = "/tmp/files/backup/"
 
@@ -23,12 +20,6 @@ DEFAULT_RESULT_PATH='/tmp/files/result/'
 DEFAULT_CSV_PATH='/tmp/files/csv/'
 DEFAULT_PDF_PATH='/tmp/files/pdf/'
 DEFAULT_SCRIPT_PATH='/tmp/files/script/'
-
-CHROMA_SETTINGS = Settings(
-        chroma_db_impl='duckdb+parquet',
-        persist_directory='db',
-        anonymized_telemetry=False
-)
 
 REQUIRED_MODELS = ["phi4-mini", "qwen2.5-coder:3b", "deepseek-r1:1.5b", "phi3:latest", "exaone3.5:2.4b", "llama3.2:1b", "all-minilm:l6-v2"]
 

@@ -36,7 +36,6 @@ apan5210/
 │   ├── Home.py                   # Main entry point for the Streamlit app
 │   ├── agents/                   # Folder for agents
 │   ├── controllers/              # Folder for contollers
-│   ├── db/                       # Folder for chroma sql
 │   ├── files/                    # Folder for all the files
 │   ├── locales/                  # Folder for locales(languages)
 │   ├── pages/                    # Folder for additional pages
@@ -62,7 +61,6 @@ apan5210/
     - `Home.py`: Main entry point for the Streamlit app.
     - `agents/`: Folder for agents.
     - `controllers/`: Folder for controllers.
-    - `db/`: Folder for Chroma SQL database.
     - `files/`: Folder for all the files.
     - `locales/`: Folder for localization (languages).
     - `pages/`: Folder for application pages.
