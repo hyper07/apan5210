@@ -84,4 +84,3 @@ uvicorn
 torch
 torchvision
 tabulate
-chromadb

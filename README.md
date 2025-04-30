@@ -33,21 +33,21 @@ This stack consists of the following main agents/services:
 apan5210/
 ├── docker-compose.yml            # Docker Compose configuration
 ├── app-streamlit/                # Source code for the Streamlit web application
-│   ├── Home.py                   # Main entry point for the Streamlit app
+│   ├── Home.py                   # Main entry point for the Streamlit app (kk3789)
 │   ├── agents/                   # Folder for agents
 │   ├── controllers/              # Folder for contollers
 │   ├── files/                    # Folder for all the files
 │   ├── locales/                  # Folder for locales(languages)
 │   ├── pages/                    # Folder for additional pages
 │   │   ├── 0_Data Analysis.py    # Page for performing data analysis
-│   │   ├── 1_Analyzer Agent.py   # Page showcasing the analyzer agent functionality
-│   │   ├── 2_Corder Agent.py     # Page for corder agent functionality
-│   │   ├── 3_Translater Agent.py # Page for translator agent functionality
-│   │   ├── 4_Insight Agent.py    # Page for insight agent functionality
-│   │   ├── 5_Reporter Agent.py   # Page for reporter agent functionality
-│   │   ├── 6_Reviewer Agent.py   # Page for reviewer agent functionality
-│   │   ├── 7_Application.py      # Page for application-related functionality
-│   │   └── 8_Setting.py          # Page for application settings
+│   │   ├── 1_Analyzer Agent.py   # Page showcasing the analyzer agent functionality (ky2604)
+│   │   ├── 2_Corder Agent.py     # Page for corder agent functionality (jx2617)
+│   │   ├── 3_Translater Agent.py # Page for translator agent functionality (sw3970)
+│   │   ├── 4_Insight Agent.py    # Page for insight agent functionality (sx2405)
+│   │   ├── 5_Reporter Agent.py   # Page for reporter agent functionality (kk3789)
+│   │   ├── 6_Reviewer Agent.py   # Page for reviewer agent functionality (st3730)
+│   │   ├── 7_Application.py      # Page for application-related functionality (kk3789)
+│   │   └── 8_Setting.py          # Page for application settings (kk3789)
 │   │
 │   └── utils/                    # folder for contants variable file or else.
 ├── docker/                       # Fodler for Dockerfile
@@ -106,6 +106,5 @@ docker-compose down
 ## Additional Information
 
 - **Docker Network**: All services are connected via a custom Docker network `apan5210-net`.
-- **Volumes**: Persistent data storage is managed using Docker volumes.
 
 For more detailed information on each service, please refer to the respective documentation.
